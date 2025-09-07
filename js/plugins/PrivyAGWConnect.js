@@ -13,7 +13,15 @@
         try {
             // Load Privy SDK dynamically
             if (!window.Privy) {
+                console.log('Loading Privy SDK...');
                 await loadScript('https://sdk.privy.io/privy-js.js');
+                
+                // Wait a bit for the SDK to fully load
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            if (!window.Privy || !window.Privy.PrivyClient) {
+                throw new Error('Privy SDK not loaded properly');
             }
 
             // Initialize Privy client
@@ -67,9 +75,13 @@
                 }
             }
 
+            // Generate requester public key
+            const requesterPublicKey = generateRequesterKey();
+            console.log('Generated requester public key:', requesterPublicKey);
+
             // Login with cross-app account (AGW)
             const user = await privyClient.loginWithCrossAppAccount({
-                requesterPublicKey: generateRequesterKey(),
+                requesterPublicKey: requesterPublicKey,
                 requesterOrigin: window.location.origin,
                 providerAppId: 'cm04asygd041fmry9zmcyn5o5',
                 smartWalletMode: false
@@ -154,6 +166,17 @@
         } catch (error) {
             console.error('AGW connection error:', error);
             
+            // If SDK fails, try popup method as fallback
+            if (error.message.includes('Privy SDK') || error.message.includes('public key')) {
+                console.log('SDK failed, trying popup method...');
+                try {
+                    await connectAGWPopup();
+                    return;
+                } catch (popupError) {
+                    console.error('Popup method also failed:', popupError);
+                }
+            }
+            
             // More specific error handling
             let errorMessage = 'Failed to connect Abstract Global Wallet';
             if (error.message.includes('window.ethereum')) {
@@ -171,13 +194,159 @@
         }
     }
 
+    // Fallback popup method
+    async function connectAGWPopup() {
+        const button = document.getElementById('wallet-connect-btn');
+        
+        try {
+            button.textContent = 'Connecting...';
+            button.disabled = true;
+
+            // Generate a unique requester public key for this session
+            const requesterPublicKey = generateRequesterKey();
+            
+            // Get the current origin
+            const requesterOrigin = window.location.origin;
+            
+            // Create the Privy connection URL
+            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                `requester_public_key=${encodeURIComponent(requesterPublicKey)}&` +
+                `connect=true&` +
+                `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                `smart_wallet_mode=false`;
+
+            console.log('Opening Privy connection:', privyUrl);
+
+            // Open Privy connection in a popup window
+            const popup = window.open(
+                privyUrl,
+                'privy-connect',
+                'width=500,height=700,scrollbars=yes,resizable=yes'
+            );
+
+            if (!popup) {
+                throw new Error('Popup blocked. Please allow popups for this site.');
+            }
+
+            // Listen for messages from the popup
+            const messageHandler = (event) => {
+                if (event.origin !== 'https://privy.abs.xyz') {
+                    return;
+                }
+
+                if (event.data.type === 'PRIVY_CONNECT_SUCCESS') {
+                    // Connection successful
+                    currentAccount = event.data.account;
+                    isConnected = true;
+
+                    // Update button state
+                    setButtonState(button, true, currentAccount);
+
+                    // Show success message
+                    showNotification('Abstract Global Wallet connected successfully!', 'success');
+
+                    // Set current wallet address for save system
+                    if (window.setCurrentWalletAddress) {
+                        window.setCurrentWalletAddress(currentAccount);
+                    }
+                    
+                    // Reset fishing system when wallet connects
+                    if (window.resetFishingSystem) {
+                        console.log('resetting fishing system after AGW connection');
+                        window.resetFishingSystem();
+                    }
+                    
+                    // Dispatch wallet connected event
+                    window.dispatchEvent(new CustomEvent('walletConnected', { 
+                        detail: { 
+                            wallet: currentAccount,
+                            provider: 'agw-privy-popup'
+                        } 
+                    }));
+
+                    // Load saved game data for this wallet
+                    setTimeout(() => {
+                        if (window.walletSaveSystem && window.walletSaveSystem.loadWalletData) {
+                            const savedData = window.walletSaveSystem.loadWalletData(currentAccount);
+                            if (savedData) {
+                                window.walletSaveSystem.applyGameState(savedData);
+                                showNotification('Game progress loaded!', 'success');
+                                
+                                // Reset fishing system after loading wallet data
+                                setTimeout(() => {
+                                    if (window.resetFishingSystem) {
+                                        console.log('resetting fishing system after loading wallet data in AGW connect');
+                                        window.resetFishingSystem();
+                                    }
+                                    // After game state is applied, sync fish counts from Firebase for this wallet
+                                    setTimeout(() => { 
+                                        try { 
+                                            if (typeof window.syncFishFromFirebase === 'function') 
+                                                window.syncFishFromFirebase(); 
+                                        } catch (e) {} 
+                                    }, 200);
+                                }, 500);
+                            } else {
+                                showNotification('Starting new game for this wallet', 'info');
+                                
+                                // Reset fishing system for new game
+                                setTimeout(() => {
+                                    if (window.resetFishingSystem) {
+                                        console.log('resetting fishing system for new AGW wallet game');
+                                        window.resetFishingSystem();
+                                    }
+                                    // For new wallet, also try to pull existing fish collection from Firebase
+                                    setTimeout(() => { 
+                                        try { 
+                                            if (typeof window.syncFishFromFirebase === 'function') 
+                                                window.syncFishFromFirebase(); 
+                                        } catch (e) {} 
+                                    }, 200);
+                                }, 500);
+                            }
+                        }
+                    }, 1000);
+
+                    // Clean up
+                    window.removeEventListener('message', messageHandler);
+                    popup.close();
+
+                } else if (event.data.type === 'PRIVY_CONNECT_ERROR') {
+                    // Connection failed
+                    throw new Error(event.data.error || 'Connection failed');
+                }
+            };
+
+            window.addEventListener('message', messageHandler);
+
+            // Handle popup close
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                    
+                    if (!isConnected) {
+                        setButtonState(button, false);
+                        showNotification('Connection cancelled', 'info');
+                    }
+                }
+            }, 1000);
+
+        } catch (error) {
+            console.error('Popup connection error:', error);
+            throw error;
+        }
+    }
+
     // Generate a unique requester public key
     function generateRequesterKey() {
         // Generate a random key for this session
         const array = new Uint8Array(32);
         crypto.getRandomValues(array);
-        // Convert to base64 properly
-        return btoa(String.fromCharCode.apply(null, Array.from(array)));
+        // Convert to base64 properly - this is the correct way
+        const binaryString = Array.from(array, byte => String.fromCharCode(byte)).join('');
+        return btoa(binaryString);
     }
 
     // Function to set button state
