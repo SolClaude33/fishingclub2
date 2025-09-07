@@ -113,39 +113,10 @@
 
     // Load RainbowKit and dependencies
     async function loadRainbowKit() {
-        return new Promise((resolve, reject) => {
-            if (window.RainbowKitProvider) {
-                resolve();
-                return;
-            }
-
-            // Load required scripts in order
-            const scripts = [
-                'https://unpkg.com/@wagmi/core@latest/dist/index.umd.js',
-                'https://unpkg.com/@wagmi/connectors@latest/dist/index.umd.js',
-                'https://unpkg.com/@rainbow-me/rainbowkit@latest/dist/index.umd.js'
-            ];
-
-            let loadedCount = 0;
-            const totalScripts = scripts.length;
-
-            scripts.forEach((src, index) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    loadedCount++;
-                    console.log(`Loaded script ${index + 1}/${totalScripts}: ${src}`);
-                    if (loadedCount === totalScripts) {
-                        console.log('All RainbowKit dependencies loaded successfully');
-                        resolve();
-                    }
-                };
-                script.onerror = () => {
-                    console.error(`Failed to load script: ${src}`);
-                    reject(new Error(`Failed to load script: ${src}`));
-                };
-                document.head.appendChild(script);
-            });
+        return new Promise((resolve) => {
+            // For now, we'll use a simplified approach without external libraries
+            console.log('Using simplified wallet connection (no external libraries)');
+            resolve();
         });
     }
 
@@ -252,7 +223,7 @@
         }
     }
 
-    // Connect wallet using RainbowKit
+    // Connect wallet using simplified approach
     async function connectWallet() {
         const button = document.getElementById('wallet-connect-btn');
         
@@ -261,18 +232,9 @@
             button.disabled = true;
 
             // Load RainbowKit if not already loaded
-            if (!window.RainbowKitProvider) {
-                await loadRainbowKit();
-            }
+            await loadRainbowKit();
 
-            // Initialize RainbowKit if not already initialized
-            if (!wagmiConfig) {
-                if (!initializeRainbowKit()) {
-                    throw new Error('Failed to initialize RainbowKit');
-                }
-            }
-
-            // Create RainbowKit modal
+            // Create wallet selection modal
             const modal = createRainbowKitModal();
             document.body.appendChild(modal);
 
@@ -435,12 +397,84 @@
                 modal.remove();
             }
 
-            // Simulate wallet connection (in a real implementation, you'd use the actual wallet APIs)
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            let address = null;
 
-            // For demo purposes, generate a mock address
-            const mockAddress = '0x' + Math.random().toString(16).substr(2, 40);
-            currentAccount = mockAddress;
+            // Handle different wallet types
+            if (walletId === 'metamask' || walletId === 'rabby') {
+                // Try to connect to MetaMask or Rabby
+                if (window.ethereum) {
+                    try {
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        if (accounts && accounts.length > 0) {
+                            address = accounts[0];
+                        }
+                    } catch (error) {
+                        console.error('Wallet connection error:', error);
+                        throw new Error('User rejected connection or wallet not available');
+                    }
+                } else {
+                    throw new Error('No wallet detected. Please install MetaMask or Rabby.');
+                }
+            } else if (walletId === 'agw') {
+                // Handle Abstract Global Wallet
+                try {
+                    // Try to connect to AGW via Privy
+                    const requesterPublicKey = generateRequesterKey();
+                    const requesterOrigin = window.location.origin;
+                    
+                    const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                        `requester_public_key=${encodeURIComponent(requesterPublicKey)}&` +
+                        `connect=true&` +
+                        `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                        `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                        `smart_wallet_mode=false`;
+
+                    // Open AGW connection in popup
+                    const popup = window.open(privyUrl, 'agw-connect', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                    
+                    if (!popup) {
+                        throw new Error('Popup blocked. Please allow popups for this site.');
+                    }
+
+                    // Wait for connection result
+                    const result = await new Promise((resolve, reject) => {
+                        const messageHandler = (event) => {
+                            if (event.origin !== 'https://privy.abs.xyz') return;
+                            
+                            if (event.data.type === 'PRIVY_CONNECT_SUCCESS') {
+                                resolve(event.data.account);
+                            } else if (event.data.type === 'PRIVY_CONNECT_ERROR') {
+                                reject(new Error(event.data.error));
+                            }
+                        };
+
+                        window.addEventListener('message', messageHandler);
+
+                        // Check if popup was closed
+                        const checkClosed = setInterval(() => {
+                            if (popup.closed) {
+                                clearInterval(checkClosed);
+                                window.removeEventListener('message', messageHandler);
+                                reject(new Error('Connection cancelled'));
+                            }
+                        }, 1000);
+                    });
+
+                    address = result;
+                } catch (error) {
+                    console.error('AGW connection error:', error);
+                    throw error;
+                }
+            } else {
+                // For other wallets, generate a mock address for demo
+                address = '0x' + Math.random().toString(16).substr(2, 40);
+            }
+
+            if (!address) {
+                throw new Error('Failed to get wallet address');
+            }
+
+            currentAccount = address;
             currentWallet = walletId;
             isConnected = true;
 
@@ -501,6 +535,19 @@
             console.error('Wallet connection error:', error);
             showNotification('Failed to connect wallet: ' + error.message, 'error');
             setButtonState(button, false);
+        }
+    }
+
+    // Generate a unique requester public key for AGW
+    function generateRequesterKey() {
+        try {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            const base64 = btoa(String.fromCharCode.apply(null, array));
+            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        } catch (error) {
+            console.error('Error generating requester key:', error);
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         }
     }
 
