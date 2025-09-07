@@ -48,51 +48,19 @@
 
     // Load required libraries dynamically
     async function loadLibraries() {
-        return new Promise((resolve, reject) => {
-            const libraries = [
-                'https://unpkg.com/@tanstack/react-query@latest/dist/index.umd.js',
-                'https://unpkg.com/viem@2.x/dist/index.umd.js',
-                'https://unpkg.com/wagmi@latest/dist/index.umd.js',
-                'https://unpkg.com/connectkit@latest/dist/index.umd.js',
-                'https://unpkg.com/@abstract-foundation/agw-client@latest/dist/index.umd.js',
-                'https://unpkg.com/@abstract-foundation/agw-react@latest/dist/index.umd.js'
-            ];
-
-            let loadedCount = 0;
-            const totalLibraries = libraries.length;
-
-            libraries.forEach((src, index) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    loadedCount++;
-                    console.log(`Loaded library ${index + 1}/${totalLibraries}: ${src}`);
-                    if (loadedCount === totalLibraries) {
-                        console.log('All libraries loaded successfully');
-                        resolve();
-                    }
-                };
-                script.onerror = () => {
-                    console.error(`Failed to load library: ${src}`);
-                    reject(new Error(`Failed to load library: ${src}`));
-                };
-                document.head.appendChild(script);
-            });
+        return new Promise((resolve) => {
+            // Skip library loading for now - use native wallet APIs
+            console.log('Using native wallet APIs instead of external libraries');
+            resolve();
         });
     }
 
-    // Initialize Wagmi configuration
+    // Initialize configuration (simplified)
     function initializeWagmiConfig() {
         try {
-            if (!window.viem || !window.wagmi) {
-                throw new Error('Required libraries not loaded');
-            }
-
-            const { createConfig, http } = window.wagmi;
-
-            // Configure supported chains - Solo Abstract Mainnet
-            const chains = [
-                {
+            // Simple configuration without external libraries
+            wagmiConfig = {
+                chains: [{
                     id: 8333,
                     name: 'Abstract Mainnet',
                     network: 'abstract',
@@ -104,69 +72,26 @@
                     blockExplorers: {
                         default: { name: 'Abstract Explorer', url: 'https://explorer.abs.xyz' }
                     }
-                }
-            ];
-
-            // Configure transports
-            const transports = {
-                [chains[0].id]: http(chains[0].rpcUrls.default)
+                }],
+                connectors: []
             };
 
-            // Configure connectors
-            const connectors = [
-                // Abstract Wallet connector
-                new window.wagmi.connectors.abstractWallet({
-                    chains,
-                    options: {
-                        projectId: window.AGWRainbowKitConfig?.projectId || '67c0edae1f9b9919fa118e211f2535a1',
-                    },
-                }),
-                // MetaMask connector
-                new window.wagmi.connectors.metaMask({
-                    chains,
-                    options: {
-                        shimDisconnect: true,
-                    },
-                }),
-                // WalletConnect connector
-                new window.wagmi.connectors.walletConnect({
-                    chains,
-                    options: {
-                        projectId: window.AGWRainbowKitConfig?.projectId || '67c0edae1f9b9919fa118e211f2535a1',
-                    },
-                }),
-            ];
-
-            // Create Wagmi config
-            wagmiConfig = createConfig({
-                chains,
-                transports,
-                connectors,
-                ssr: false
-            });
-
-            console.log('Wagmi configuration initialized successfully');
+            console.log('Configuration initialized successfully');
             return true;
         } catch (error) {
-            console.error('Failed to initialize Wagmi configuration:', error);
+            console.error('Failed to initialize config:', error);
             return false;
         }
     }
 
-    // Initialize ConnectKit configuration
+    // Initialize ConnectKit configuration (simplified)
     function initializeConnectKitConfig() {
         try {
-            if (!window.ConnectKit) {
-                throw new Error('ConnectKit not loaded');
-            }
-
             connectKitConfig = {
                 appName: window.AGWRainbowKitConfig?.appName || 'Penguin Fishing Club',
                 appDescription: window.AGWRainbowKitConfig?.appDescription || 'A Web3 fishing game with multi-wallet support',
                 appUrl: window.AGWRainbowKitConfig?.appUrl || window.location.origin,
-                appIcon: window.AGWRainbowKitConfig?.appIcon || `${window.location.origin}/logo.png`,
-                chains: wagmiConfig.chains,
-                connectors: wagmiConfig.connectors
+                appIcon: window.AGWRainbowKitConfig?.appIcon || `${window.location.origin}/logo.png`
             };
 
             console.log('ConnectKit configuration initialized successfully');
@@ -221,7 +146,7 @@
         return button;
     }
 
-    // Connect wallet using ConnectKit
+    // Connect wallet using native APIs
     async function connectWallet() {
         const button = document.getElementById('wallet-connect-btn');
         
@@ -229,15 +154,10 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Load libraries if not already loaded
-            if (!window.wagmi || !window.ConnectKit) {
-                await loadLibraries();
-            }
-
             // Initialize configurations
             if (!wagmiConfig) {
                 if (!initializeWagmiConfig()) {
-                    throw new Error('Failed to initialize Wagmi configuration');
+                    throw new Error('Failed to initialize configuration');
                 }
             }
 
@@ -247,7 +167,7 @@
                 }
             }
 
-            // Create ConnectKit modal
+            // Create wallet selection modal
             const modal = createConnectKitModal();
             document.body.appendChild(modal);
 
@@ -311,9 +231,7 @@
         `;
 
         const wallets = [
-            { id: 'abstract', name: 'Abstract Wallet', icon: '🔗' },
-            { id: 'metamask', name: 'MetaMask', icon: '🦊' },
-            { id: 'walletconnect', name: 'WalletConnect', icon: '🔗' }
+            { id: 'metamask', name: 'MetaMask', icon: '🦊' }
         ];
 
         wallets.forEach(wallet => {
@@ -394,42 +312,24 @@
 
             let address = null;
 
-            // Handle different wallet types using ConnectKit
-            if (walletId === 'abstract') {
-                // Use Abstract Wallet connector
-                try {
-                    const connector = wagmiConfig.connectors.find(c => c.id === 'abstractWallet');
-                    if (connector) {
-                        const result = await connector.connect();
-                        address = result.accounts[0];
-                    } else {
-                        throw new Error('Abstract Wallet connector not found');
-                    }
-                } catch (error) {
-                    console.error('Abstract Wallet error:', error);
-                    throw error;
-                }
-            } else if (walletId === 'metamask') {
-                // Use MetaMask connector
-                try {
-                    const connector = wagmiConfig.connectors.find(c => c.id === 'metaMask');
-                    if (connector) {
-                        const result = await connector.connect();
-                        address = result.accounts[0];
-                        
-                        // Switch to Abstract Mainnet
+            // Handle different wallet types using native APIs
+            if (walletId === 'metamask') {
+                // Use MetaMask directly
+                if (window.ethereum) {
+                    try {
+                        // Primero intentar cambiar a Abstract Mainnet
                         try {
                             await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0x2085' }], // 8333 in hex
+                                params: [{ chainId: '0x2085' }], // 8333 en hex
                             });
                         } catch (switchError) {
-                            // If network doesn't exist, add it
+                            // Si no existe la red, agregarla
                             if (switchError.code === 4902) {
                                 await window.ethereum.request({
                                     method: 'wallet_addEthereumChain',
                                     params: [{
-                                        chainId: '0x2085',
+                                        chainId: '0x2085', // 8333 en hex
                                         chainName: 'Abstract Mainnet',
                                         nativeCurrency: {
                                             name: 'Abstract Token',
@@ -444,26 +344,17 @@
                                 throw switchError;
                             }
                         }
-                    } else {
-                        throw new Error('MetaMask connector not found');
+                        
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        if (accounts && accounts.length > 0) {
+                            address = accounts[0];
+                        }
+                    } catch (error) {
+                        console.error('MetaMask connection error:', error);
+                        throw new Error('User rejected connection or failed to add Abstract network');
                     }
-                } catch (error) {
-                    console.error('MetaMask connection error:', error);
-                    throw error;
-                }
-            } else if (walletId === 'walletconnect') {
-                // Use WalletConnect connector
-                try {
-                    const connector = wagmiConfig.connectors.find(c => c.id === 'walletConnect');
-                    if (connector) {
-                        const result = await connector.connect();
-                        address = result.accounts[0];
-                    } else {
-                        throw new Error('WalletConnect connector not found');
-                    }
-                } catch (error) {
-                    console.error('WalletConnect error:', error);
-                    throw error;
+                } else {
+                    throw new Error('MetaMask not detected. Please install MetaMask.');
                 }
             } else {
                 throw new Error('Unsupported wallet type');
@@ -574,24 +465,20 @@
     SceneManager.run = function(sceneClass) {
         _SceneManager_run.call(this, sceneClass);
         
-        // Load libraries and initialize
-        loadLibraries().then(() => {
-            setTimeout(() => {
-                if (!document.getElementById('wallet-connect-btn')) {
-                    const walletButton = createWalletButton();
-                    document.body.appendChild(walletButton);
-                }
-            }, 1000);
-            setTimeout(() => {
-                if (window.resetFishingSystem) {
-                    console.log('resetting fishing system when game starts');
-                    window.resetFishingSystem();
-                }
-            }, 2000);
-        }).catch(error => {
-            console.error('Failed to load ConnectKit libraries:', error);
-            showNotification('Failed to load wallet libraries. Please refresh the page.', 'error');
-        });
+        // Initialize immediately without external libraries
+        setTimeout(() => {
+            if (!document.getElementById('wallet-connect-btn')) {
+                const walletButton = createWalletButton();
+                document.body.appendChild(walletButton);
+            }
+        }, 1000);
+        
+        setTimeout(() => {
+            if (window.resetFishingSystem) {
+                console.log('resetting fishing system when game starts');
+                window.resetFishingSystem();
+            }
+        }, 2000);
     };
 
     console.log('ConnectKit + AGW plugin loaded');
