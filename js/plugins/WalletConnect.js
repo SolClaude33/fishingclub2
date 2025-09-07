@@ -113,12 +113,13 @@
     async function connectAGW() {
         const button = document.getElementById('wallet-connect-btn');
         
+        // Prevent wallet conflicts by temporarily disabling other providers
+        const originalEthereum = window.ethereum;
+        
         try {
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Prevent wallet conflicts by temporarily disabling other providers
-            const originalEthereum = window.ethereum;
             if (window.ethereum && window.ethereum.isMetaMask) {
                 console.log('Temporarily disabling MetaMask to prevent conflicts');
                 Object.defineProperty(window, 'ethereum', {
