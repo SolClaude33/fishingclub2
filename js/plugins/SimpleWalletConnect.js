@@ -272,5 +272,6 @@
         }, 2000);
     };
 
-    console.log('Simple Wallet Connect plugin loaded');
+    console.log('Simple Wallet Connect plugin loaded - DISABLED');
+    return; // Disable this plugin
 })();
