@@ -24,6 +24,11 @@
 
     // Avoid window.ethereum conflicts
     console.log('WalletConnect: Simple AGW + Privy popup method');
+    
+    // Try to prevent window.ethereum conflicts
+    if (window.ethereum && typeof window.ethereum === 'object') {
+        console.log('WalletConnect: window.ethereum detected, avoiding conflicts');
+    }
 
     // Connect to Abstract Global Wallet via Privy popup
     async function connectAGW() {
@@ -163,10 +168,34 @@
                     }
                 }
             }, 1000);
+            
+            // Timeout after 5 minutes
+            setTimeout(() => {
+                if (!isConnected) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                    popup.close();
+                    setButtonState(button, false);
+                    showNotification('Connection timeout', 'error');
+                }
+            }, 300000); // 5 minutes
 
         } catch (error) {
             console.error('AGW connection error:', error);
-            alert('Failed to connect Abstract Global Wallet: ' + error.message);
+            
+            // More specific error handling
+            let errorMessage = 'Failed to connect Abstract Global Wallet';
+            if (error.message.includes('window.ethereum')) {
+                errorMessage = 'Wallet conflict detected. Please try disabling other wallet extensions temporarily.';
+            } else if (error.message.includes('popup')) {
+                errorMessage = 'Popup blocked. Please allow popups for this site.';
+            } else if (error.message.includes('public key')) {
+                errorMessage = 'Connection error. Please try again.';
+            } else {
+                errorMessage = error.message;
+            }
+            
+            alert(errorMessage);
             setButtonState(button, false);
         }
     }
@@ -176,7 +205,8 @@
         // Generate a random key for this session
         const array = new Uint8Array(32);
         crypto.getRandomValues(array);
-        return btoa(String.fromCharCode.apply(null, array));
+        // Convert to base64 properly
+        return btoa(String.fromCharCode.apply(null, Array.from(array)));
     }
 
     // Function to set button state
