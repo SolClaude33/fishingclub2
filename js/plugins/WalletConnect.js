@@ -1,16 +1,16 @@
 //=============================================================================
-// RPG Maker MZ - WalletConnect Plugin (Official AGW + Privy Integration)
+// RPG Maker MZ - WalletConnect Plugin (Simple AGW + Privy Popup)
 //=============================================================================
 
 /*:
  * @target MZ
- * @plugindesc Official Abstract Global Wallet + Privy integration using React components.
+ * @plugindesc Simple Abstract Global Wallet connection using Privy popup method.
  * @author Assistant
  *
  * @help WalletConnect.js
  *
- * This plugin integrates Abstract Global Wallet using the official
- * AbstractPrivyProvider and useAbstractPrivyLogin components.
+ * This plugin provides a simple connection to Abstract Global Wallet
+ * using the Privy popup method without SDK conflicts.
  *
  * It does not provide plugin commands.
  */
@@ -21,85 +21,11 @@
     // Global state
     let isConnected = false;
     let currentAccount = null;
-    let agwProvider = null;
 
     // Avoid window.ethereum conflicts
-    console.log('WalletConnect: Official AGW + Privy integration');
+    console.log('WalletConnect: Simple AGW + Privy popup method');
 
-    // Load required libraries
-    async function loadRequiredLibraries() {
-        const libraries = [
-            {
-                name: 'React',
-                url: 'https://unpkg.com/react@18/umd/react.production.min.js',
-                global: 'React'
-            },
-            {
-                name: 'ReactDOM',
-                url: 'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-                global: 'ReactDOM'
-            },
-            {
-                name: 'Privy',
-                url: 'https://sdk.privy.io/privy-js.js',
-                global: 'Privy'
-            }
-        ];
-
-        for (const lib of libraries) {
-            if (!window[lib.global]) {
-                try {
-                    await loadScript(lib.url);
-                    console.log(`✅ ${lib.name} loaded`);
-                } catch (error) {
-                    console.error(`❌ Failed to load ${lib.name}:`, error);
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    // Load a script dynamically
-    function loadScript(src) {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = src;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-        });
-    }
-
-    // Initialize AGW + Privy system
-    async function initializeAGW() {
-        try {
-            // Load required libraries
-            const librariesLoaded = await loadRequiredLibraries();
-            if (!librariesLoaded) {
-                throw new Error('Failed to load required libraries');
-            }
-
-            // Initialize AGW Provider
-            if (window.AGWPrivyProvider) {
-                agwProvider = window.AGWPrivyProvider;
-                const initialized = agwProvider.init();
-                if (!initialized) {
-                    throw new Error('Failed to initialize AGW Provider');
-                }
-            } else {
-                throw new Error('AGW Provider not found');
-            }
-
-            console.log('✅ AGW + Privy system initialized');
-            return true;
-        } catch (error) {
-            console.error('❌ Failed to initialize AGW + Privy:', error);
-            return false;
-        }
-    }
-
-    // Connect to Abstract Global Wallet using official method
+    // Connect to Abstract Global Wallet via Privy popup
     async function connectAGW() {
         const button = document.getElementById('wallet-connect-btn');
         
@@ -107,22 +33,42 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Initialize if not already done
-            if (!agwProvider) {
-                const initialized = await initializeAGW();
-                if (!initialized) {
-                    throw new Error('Failed to initialize AGW + Privy system');
-                }
+            // Generate a unique requester public key for this session
+            const requesterPublicKey = generateRequesterKey();
+            
+            // Get the current origin
+            const requesterOrigin = window.location.origin;
+            
+            // Create the Privy connection URL
+            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                `requester_public_key=${encodeURIComponent(requesterPublicKey)}&` +
+                `connect=true&` +
+                `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                `smart_wallet_mode=false`;
+
+            console.log('Opening Privy connection:', privyUrl);
+
+            // Open Privy connection in a popup window
+            const popup = window.open(
+                privyUrl,
+                'privy-connect',
+                'width=500,height=700,scrollbars=yes,resizable=yes'
+            );
+
+            if (!popup) {
+                throw new Error('Popup blocked. Please allow popups for this site.');
             }
 
-            // Use the official useAbstractPrivyLogin hook
-            if (window.useAbstractPrivyLogin) {
-                const { login } = window.useAbstractPrivyLogin();
-                const user = await login();
+            // Listen for messages from the popup
+            const messageHandler = (event) => {
+                if (event.origin !== 'https://privy.abs.xyz') {
+                    return;
+                }
 
-                if (user && user.wallet) {
+                if (event.data.type === 'PRIVY_CONNECT_SUCCESS') {
                     // Connection successful
-                    currentAccount = user.wallet.address;
+                    currentAccount = event.data.account;
                     isConnected = true;
 
                     // Update button state
@@ -141,6 +87,14 @@
                         console.log('resetting fishing system after AGW connection');
                         window.resetFishingSystem();
                     }
+                    
+                    // Dispatch wallet connected event
+                    window.dispatchEvent(new CustomEvent('walletConnected', { 
+                        detail: { 
+                            wallet: currentAccount,
+                            provider: 'agw-privy'
+                        } 
+                    }));
 
                     // Load saved game data for this wallet
                     setTimeout(() => {
@@ -185,18 +139,44 @@
                         }
                     }, 1000);
 
-                } else {
-                    throw new Error('Failed to get wallet from Privy user');
+                    // Clean up
+                    window.removeEventListener('message', messageHandler);
+                    popup.close();
+
+                } else if (event.data.type === 'PRIVY_CONNECT_ERROR') {
+                    // Connection failed
+                    throw new Error(event.data.error || 'Connection failed');
                 }
-            } else {
-                throw new Error('useAbstractPrivyLogin hook not available');
-            }
+            };
+
+            window.addEventListener('message', messageHandler);
+
+            // Handle popup close
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                    
+                    if (!isConnected) {
+                        setButtonState(button, false);
+                        showNotification('Connection cancelled', 'info');
+                    }
+                }
+            }, 1000);
 
         } catch (error) {
             console.error('AGW connection error:', error);
             alert('Failed to connect Abstract Global Wallet: ' + error.message);
             setButtonState(button, false);
         }
+    }
+
+    // Generate a unique requester public key
+    function generateRequesterKey() {
+        // Generate a random key for this session
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return btoa(String.fromCharCode.apply(null, array));
     }
 
     // Function to set button state
@@ -333,15 +313,6 @@
     SceneManager.run = function(sceneClass) {
         _SceneManager_run.call(this, sceneClass);
         
-        // Initialize AGW + Privy system
-        setTimeout(async () => {
-            try {
-                await initializeAGW();
-            } catch (error) {
-                console.error('Failed to initialize AGW + Privy:', error);
-            }
-        }, 500);
-        
         // Add wallet button after a short delay to ensure DOM is ready
         setTimeout(() => {
             if (!document.getElementById('wallet-connect-btn')) {
@@ -359,5 +330,5 @@
         }, 2000);
     };
 
-    console.log('WalletConnect plugin loaded - Official AGW + Privy integration');
+    console.log('WalletConnect plugin loaded - Simple AGW + Privy popup method');
 })();
