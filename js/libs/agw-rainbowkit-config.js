@@ -4,35 +4,22 @@
 
 // Configuration for Abstract Global Wallet + RainbowKit integration
 window.AGWRainbowKitConfig = {
-    // WalletConnect Project ID (replace with your actual project ID)
-    projectId: 'your-walletconnect-project-id',
+    // WalletConnect Project ID
+    projectId: '67c0edae1f9b9919fa118e211f2535a1',
     
-    // Supported chains
+    // Supported chains - Solo Abstract Mainnet
     chains: [
         {
-            id: 1,
-            name: 'Ethereum Mainnet',
-            network: 'homestead',
-            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+            id: 8333,
+            name: 'Abstract Mainnet',
+            network: 'abstract',
+            nativeCurrency: { name: 'Abstract Token', symbol: 'ABS', decimals: 18 },
             rpcUrls: {
-                default: 'https://eth.llamarpc.com',
-                public: 'https://eth.llamarpc.com'
+                default: 'https://api.abs.xyz',
+                public: 'https://api.abs.xyz'
             },
             blockExplorers: {
-                default: { name: 'Etherscan', url: 'https://etherscan.io' }
-            }
-        },
-        {
-            id: 8453,
-            name: 'Base',
-            network: 'base',
-            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-            rpcUrls: {
-                default: 'https://mainnet.base.org',
-                public: 'https://mainnet.base.org'
-            },
-            blockExplorers: {
-                default: { name: 'BaseScan', url: 'https://basescan.org' }
+                default: { name: 'Abstract Explorer', url: 'https://explorer.abs.xyz' }
             }
         }
     ],

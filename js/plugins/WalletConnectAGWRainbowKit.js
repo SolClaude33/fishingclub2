@@ -89,15 +89,27 @@
             }
 
             const { createConfig, http } = window.wagmi;
-            const { mainnet, base } = window.viem.chains;
 
-            // Configure supported chains
-            const chains = [mainnet, base];
+            // Configure supported chains from config - Solo Abstract Mainnet
+            const chains = window.AGWRainbowKitConfig?.chains || [
+                {
+                    id: 8333,
+                    name: 'Abstract Mainnet',
+                    network: 'abstract',
+                    nativeCurrency: { name: 'Abstract Token', symbol: 'ABS', decimals: 18 },
+                    rpcUrls: {
+                        default: 'https://api.abs.xyz',
+                        public: 'https://api.abs.xyz'
+                    },
+                    blockExplorers: {
+                        default: { name: 'Abstract Explorer', url: 'https://explorer.abs.xyz' }
+                    }
+                }
+            ];
 
-            // Configure transports
+            // Configure transports - Solo Abstract Mainnet
             const transports = {
-                [mainnet.id]: http(),
-                [base.id]: http()
+                [8333]: http('https://api.abs.xyz')
             };
 
             // Create wagmi config
@@ -105,23 +117,23 @@
                 chains,
                 transports,
                 connectors: [
-                    // MetaMask connector
+                    // Abstract Global Wallet connector (Principal)
+                    new window.wagmi.connectors.abstractWallet({
+                        chains,
+                    }),
+                    // MetaMask connector (Para usuarios que quieran usar MetaMask en Abstract)
                     new window.wagmi.connectors.metaMask({
                         chains,
                         options: {
                             shimDisconnect: true,
                         },
                     }),
-                    // WalletConnect connector
+                    // WalletConnect connector (Para otras wallets via WalletConnect)
                     new window.wagmi.connectors.walletConnect({
                         chains,
                         options: {
-                            projectId: 'your-project-id', // Replace with your WalletConnect project ID
+                            projectId: window.AGWRainbowKitConfig?.projectId || 'your-project-id',
                         },
-                    }),
-                    // Abstract Global Wallet connector
-                    new window.wagmi.connectors.abstractWallet({
-                        chains,
                     }),
                 ],
             });
@@ -142,8 +154,8 @@
             }
 
             rainbowKitConfig = {
-                appName: 'Penguin Fishing Club',
-                projectId: 'your-project-id', // Replace with your WalletConnect project ID
+                appName: window.AGWRainbowKitConfig?.appName || 'Penguin Fishing Club',
+                projectId: window.AGWRainbowKitConfig?.projectId || 'your-project-id',
                 chains: wagmiConfig.chains,
                 connectors: wagmiConfig.connectors,
             };
@@ -290,12 +302,9 @@
         `;
 
         const wallets = [
-            { id: 'metamask', name: 'MetaMask', icon: '🦊' },
-            { id: 'rabby', name: 'Rabby', icon: '🐰' },
             { id: 'agw', name: 'Abstract Global Wallet', icon: '🌐' },
-            { id: 'walletconnect', name: 'WalletConnect', icon: '🔗' },
-            { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔵' },
-            { id: 'trust', name: 'Trust Wallet', icon: '🛡️' }
+            { id: 'metamask', name: 'MetaMask', icon: '🦊' },
+            { id: 'walletconnect', name: 'WalletConnect', icon: '🔗' }
         ];
 
         wallets.forEach(wallet => {
@@ -377,25 +386,9 @@
             let address = null;
 
             // Handle different wallet types using official connectors
-            if (walletId === 'metamask' || walletId === 'rabby') {
-                // Use MetaMask connector
-                if (window.ethereum) {
-                    try {
-                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                        if (accounts && accounts.length > 0) {
-                            address = accounts[0];
-                        }
-                    } catch (error) {
-                        console.error('Wallet connection error:', error);
-                        throw new Error('User rejected connection or wallet not available');
-                    }
-                } else {
-                    throw new Error('No wallet detected. Please install MetaMask or Rabby.');
-                }
-            } else if (walletId === 'agw') {
-                // Use Abstract Global Wallet connector
+            if (walletId === 'agw') {
+                // Use Abstract Global Wallet connector (Principal)
                 try {
-                    // Use the official AGW connector
                     const connector = wagmiConfig.connectors.find(c => c.id === 'abstractWallet');
                     if (connector) {
                         const result = await connector.connect();
@@ -407,9 +400,43 @@
                     console.error('AGW connection error:', error);
                     throw error;
                 }
+            } else if (walletId === 'metamask') {
+                // Use MetaMask connector para Abstract
+                if (window.ethereum) {
+                    try {
+                        // Cambiar a Abstract Mainnet si es necesario
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x2085' }], // 8333 en hex
+                        });
+                        
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        if (accounts && accounts.length > 0) {
+                            address = accounts[0];
+                        }
+                    } catch (error) {
+                        console.error('MetaMask connection error:', error);
+                        throw new Error('User rejected connection or failed to switch to Abstract network');
+                    }
+                } else {
+                    throw new Error('MetaMask not detected. Please install MetaMask.');
+                }
+            } else if (walletId === 'walletconnect') {
+                // Use WalletConnect connector
+                try {
+                    const connector = wagmiConfig.connectors.find(c => c.id === 'walletConnect');
+                    if (connector) {
+                        const result = await connector.connect();
+                        address = result.accounts[0];
+                    } else {
+                        throw new Error('WalletConnect connector not found');
+                    }
+                } catch (error) {
+                    console.error('WalletConnect error:', error);
+                    throw error;
+                }
             } else {
-                // For other wallets, generate a mock address for demo
-                address = '0x' + Math.random().toString(16).substr(2, 40);
+                throw new Error('Unsupported wallet type');
             }
 
             if (!address) {
