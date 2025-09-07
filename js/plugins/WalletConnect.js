@@ -383,8 +383,7 @@
         }, 2000);
     };
 
-    console.log('Abstract Global Wallet (Privy) plugin loaded - DISABLED');
-    return; // Disable this plugin
+    console.log('Abstract Global Wallet (Privy) plugin loaded');
 })();
 
 
