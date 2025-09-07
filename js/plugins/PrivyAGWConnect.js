@@ -16,7 +16,7 @@
             button.disabled = true;
 
             // Generate a unique requester public key for this session
-            const requesterPublicKey = generateRequesterKey();
+            const requesterPublicKey = await generateRequesterKey();
             console.log('Generated requester public key:', requesterPublicKey);
             
             // Get the current origin
@@ -167,15 +167,37 @@
     }
 
     // Generate a unique requester public key
-    function generateRequesterKey() {
-        // For debugging, let's try a known working key format
-        // This is a test key that should work with Privy
-        const testKey = 'dGVzdC1rZXktZm9yLWRlYnVnZ2luZy1wdXJwb3Nlcy1vbmx5';
-        
-        console.log('Using test key for debugging:', testKey);
-        console.log('Key length:', testKey.length);
-        
-        return testKey;
+    async function generateRequesterKey() {
+        try {
+            // Generate a real key pair using Web Crypto API
+            const keyPair = await crypto.subtle.generateKey(
+                {
+                    name: "ECDH",
+                    namedCurve: "P-256"
+                },
+                true,
+                ["deriveKey"]
+            );
+            
+            // Export the public key
+            const publicKeyBuffer = await crypto.subtle.exportKey("raw", keyPair.publicKey);
+            
+            // Convert to base64
+            const base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(publicKeyBuffer)));
+            
+            console.log('Generated real public key:', base64);
+            console.log('Key length:', base64.length);
+            
+            return base64;
+        } catch (error) {
+            console.error('Error generating key:', error);
+            // Fallback to a simple random key
+            const array = new Uint8Array(65); // 65 bytes for P-256 public key
+            crypto.getRandomValues(array);
+            const fallback = btoa(String.fromCharCode.apply(null, Array.from(array)));
+            console.log('Using fallback key:', fallback);
+            return fallback;
+        }
     }
 
     // Function to set button state
