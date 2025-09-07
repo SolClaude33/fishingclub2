@@ -23,11 +23,11 @@
     let currentAccount = null;
 
     // Avoid window.ethereum conflicts
-    console.log('Simple AGW Connect: Avoiding window.ethereum conflicts');
+    console.log('WalletConnect: Avoiding window.ethereum conflicts');
 
     // Connect to Abstract Global Wallet via Privy popup
     async function connectAGW() {
-        const button = document.getElementById('simple-agw-connect-btn');
+        const button = document.getElementById('wallet-connect-btn');
         
         try {
             button.textContent = 'Connecting...';
@@ -231,7 +231,7 @@
     // Create wallet connect button
     function createWalletButton() {
         const button = document.createElement('button');
-        button.id = 'simple-agw-connect-btn';
+        button.id = 'wallet-connect-btn';
         button.style.cssText = `
             position: fixed;
             top: 16px;
@@ -315,7 +315,7 @@
         
         // Add wallet button after a short delay to ensure DOM is ready
         setTimeout(() => {
-            if (!document.getElementById('simple-agw-connect-btn')) {
+            if (!document.getElementById('wallet-connect-btn')) {
                 const walletButton = createWalletButton();
                 document.body.appendChild(walletButton);
             }
@@ -330,5 +330,5 @@
         }, 2000);
     };
 
-    console.log('Simple AGW Connect plugin loaded');
+    console.log('WalletConnect plugin loaded');
 })();
