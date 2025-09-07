@@ -1,6 +1,35 @@
 {
-    "name": "rmmz-game",
+    "name": "penguin-fishing-club",
+    "version": "1.2.0",
+    "description": "A Web3 fishing game built with RPG Maker MZ, featuring blockchain integration, wallet connectivity, and interactive minigames.",
     "main": "index.html",
+    "scripts": {
+        "start": "python -m http.server 8000",
+        "serve": "python -m http.server 8000",
+        "dev": "python -m http.server 8000",
+        "test": "echo \"Open coinflip-test.html in your browser to test Web3 functionality\"",
+        "build": "echo \"Static web game - no build needed\"",
+        "deploy": "echo \"Deploy to your preferred static hosting service\""
+    },
+    "keywords": [
+        "web3",
+        "blockchain",
+        "fishing",
+        "game",
+        "rpgmaker",
+        "abstract",
+        "agw",
+        "metaverse"
+    ],
+    "author": "Assistant",
+    "license": "MIT",
+    "dependencies": {
+        "@abstract-foundation/agw-react": "^1.0.0",
+        "@abstract-foundation/agw-client": "^1.0.0",
+        "wagmi": "^2.12.7",
+        "viem": "^2.21.7",
+        "@tanstack/react-query": "^5.51.23"
+    },
     "chromium-args": "--force-color-profile=srgb",
     "window": {
         "title": "Penguin Fishing Club",

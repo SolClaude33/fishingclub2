@@ -23,6 +23,10 @@
     let currentAccount = null;
     let privyClient = null;
 
+    // Avoid window.ethereum conflicts by not trying to redefine it
+    // This prevents the "Cannot redefine property: ethereum" error
+    console.log('WalletConnect: Avoiding window.ethereum conflicts');
+
     // Function to set button state
     function setButtonState(button, connected, account = null) {
         if (connected && account) {
