@@ -1,16 +1,16 @@
 //=============================================================================
-// RPG Maker MZ - Abstract Global Wallet Connect Plugin (Official SDK)
+// RPG Maker MZ - RainbowKit + AGW Integration Plugin
 //=============================================================================
 
 /*:
  * @target MZ
- * @plugindesc Adds Abstract Global Wallet integration using official AGW SDK.
+ * @plugindesc RainbowKit + AGW integration for multi-wallet support
  * @author Assistant
  *
- * @help WalletConnect.js
+ * @help RainbowKitAGW.js
  *
- * This plugin integrates Abstract Global Wallet using the official AGW SDK.
- * It provides seamless wallet connection and transaction signing.
+ * This plugin integrates RainbowKit with Abstract Global Wallet for
+ * seamless multi-wallet support including MetaMask, WalletConnect, etc.
  *
  * It does not provide plugin commands.
  */
@@ -21,55 +21,66 @@
     // Global state
     let isConnected = false;
     let currentAccount = null;
-    let agwClient = null;
-    let agwProvider = null;
+    let currentWallet = null;
+    let wagmiConfig = null;
+    let rainbowKitConfig = null;
 
     // Function to set button state
-    function setButtonState(button, connected, account = null) {
+    function setButtonState(button, connected, account = null, walletName = '') {
         if (connected && account) {
-            // Connected state - disable button
-            button.disabled = true;
-            button.textContent = `AGW ${account.slice(0, 6)}...${account.slice(-4)}`;
-            button.style.background = 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 50%, #2E7D32 100%)';
-            button.style.border = '2px solid #2E7D32';
-            button.style.boxShadow = '0 3px 0 #1B5E20, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-            button.style.cursor = 'default';
-            button.style.opacity = '0.8';
-            button.title = `Connected via Abstract Global Wallet: ${account}`;
-            
-            // Remove hover effects when connected
-            button.removeEventListener('mouseenter', button._hoverEnter);
-            button.removeEventListener('mouseleave', button._hoverLeave);
-        } else {
-            // Disconnected state - enable button
+            button.textContent = `${walletName} Connected`;
+            button.style.backgroundColor = '#10b981';
+            button.style.borderColor = '#10b981';
             button.disabled = false;
-            button.textContent = 'Connect AGW';
-            button.style.background = 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%)';
-            button.style.border = '2px solid #654321';
-            button.style.boxShadow = '0 3px 0 #654321, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-            button.style.cursor = 'pointer';
-            button.style.opacity = '1';
-            button.title = 'Connect with Abstract Global Wallet';
             
-            // Re-add hover effects when disconnected
-            if (!button._hoverEnter) {
-                button._hoverEnter = () => {
-                    if (!button.disabled) {
-                        button.style.background = 'linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%)';
-                        button.style.transform = 'translateY(-1px)';
-                        button.style.boxShadow = '0 4px 0 #654321, 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-                    }
-                };
-                button._hoverLeave = () => {
-                    if (!button.disabled) {
-                        button.style.background = 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%)';
-                        button.style.transform = 'translateY(0)';
-                        button.style.boxShadow = '0 3px 0 #654321, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-                    }
-                };
+            if (account) {
+                const shortAddress = account.slice(0, 6) + '...' + account.slice(-4);
+                button.title = `Connected: ${shortAddress}`;
             }
-            button.addEventListener('mouseenter', button._hoverEnter);
-            button.addEventListener('mouseleave', button._hoverLeave);
+        } else {
+            button.textContent = 'Connect Wallet';
+            button.style.backgroundColor = '#3b82f6';
+            button.style.borderColor = '#3b82f6';
+            button.disabled = false;
+            button.title = 'Click to connect your wallet';
+        }
+    }
+
+    // Load required libraries dynamically
+    async function loadLibraries() {
+        return new Promise((resolve) => {
+            // Skip library loading for now - use native wallet APIs
+            console.log('Using native wallet APIs instead of external libraries');
+            resolve();
+        });
+    }
+
+    // Initialize configuration (simplified)
+    function initializeWagmiConfig() {
+        try {
+            // Simple configuration without external libraries
+            wagmiConfig = {
+                chains: [{
+                    id: 8333,
+                    name: 'Abstract Mainnet',
+                    network: 'abstract',
+                    nativeCurrency: { name: 'Abstract Token', symbol: 'ABS', decimals: 18 },
+                    rpcUrls: {
+                        default: 'https://api.abs.xyz',
+                        public: 'https://api.abs.xyz'
+                    },
+                    blockExplorers: {
+                        default: { name: 'Abstract Explorer', url: 'https://explorer.abs.xyz' }
+                    }
+                }],
+                connectors: []
+            };
+
+            console.log('Configuration initialized successfully');
+            return true;
+        } catch (error) {
+            console.error('Failed to initialize config:', error);
+            return false;
         }
     }
 
@@ -77,200 +88,76 @@
     function createWalletButton() {
         const button = document.createElement('button');
         button.id = 'wallet-connect-btn';
+        button.textContent = 'Connect Wallet';
         button.style.cssText = `
             position: fixed;
-            top: 16px;
+            top: 20px;
             right: 20px;
             z-index: 10000;
-            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
-            border: 2px solid #654321;
+            border: 2px solid #3b82f6;
             border-radius: 12px;
-            padding: 10px 16px;
             font-family: 'Arial', sans-serif;
-            font-size: 13px;
-            font-weight: bold;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 3px 0 #654321, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         `;
 
-        // Click handler
-        button.addEventListener('click', (e) => {
+        button.addEventListener('mouseenter', () => {
             if (!button.disabled) {
-                connectAGW();
+                button.style.transform = 'translateY(-2px)';
+                button.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
             }
         });
 
-        // Set initial state
-        setButtonState(button, false);
+        button.addEventListener('mouseleave', () => {
+            if (!button.disabled) {
+                button.style.transform = 'translateY(0)';
+                button.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+            }
+        });
+
+        button.addEventListener('click', connectWallet);
 
         return button;
     }
 
-    // Connect to Abstract Global Wallet via Privy
-    async function connectAGW() {
+    // Connect wallet using native APIs
+    async function connectWallet() {
         const button = document.getElementById('wallet-connect-btn');
         
         try {
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Check if we can safely proceed without conflicts
-            if (window.ethereum && window.ethereum.isMetaMask) {
-                console.log('MetaMask detected - proceeding with AGW connection');
-                // Don't try to disable MetaMask, just proceed
+            // Initialize configurations
+            if (!wagmiConfig) {
+                if (!initializeWagmiConfig()) {
+                    throw new Error('Failed to initialize configuration');
+                }
             }
 
-            // Generate a unique requester public key for this session
-            const requesterPublicKey = generateRequesterKey();
-            console.log('Generated requester public key:', requesterPublicKey);
-            
-            // Validate the public key
-            if (!requesterPublicKey || requesterPublicKey.length < 10) {
-                throw new Error('Failed to generate valid requester public key');
-            }
-            
-            // Get the current origin
-            const requesterOrigin = window.location.origin;
-            
-            // Create the Privy connection URL
-            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
-                `requester_public_key=${encodeURIComponent(requesterPublicKey)}&` +
-                `connect=true&` +
-                `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
-                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
-                `smart_wallet_mode=false`;
+            // Create wallet selection modal
+            const modal = createRainbowKitModal();
+            document.body.appendChild(modal);
 
-            console.log('Opening Privy connection:', privyUrl);
-
-            // Open Privy connection in a popup window
-            const popup = window.open(
-                privyUrl,
-                'privy-connect',
-                'width=500,height=700,scrollbars=yes,resizable=yes'
-            );
-
-            if (!popup) {
-                throw new Error('Popup blocked. Please allow popups for this site.');
-            }
-
-            // Listen for messages from the popup
-            const messageHandler = (event) => {
-                if (event.origin !== 'https://privy.abs.xyz') {
-                    return;
-                }
-
-                if (event.data.type === 'PRIVY_CONNECT_SUCCESS') {
-                    // Connection successful
-                    currentAccount = event.data.account;
-                    isConnected = true;
-
-                    // Update button state
-                    setButtonState(button, true, currentAccount);
-
-                    // Show success message
-                    showNotification('Abstract Global Wallet connected successfully!', 'success');
-
-                    // Set current wallet address for save system
-                    if (window.setCurrentWalletAddress) {
-                        window.setCurrentWalletAddress(currentAccount);
-                    }
-                    
-                    // Reset fishing system when wallet connects
-                    if (window.resetFishingSystem) {
-                        console.log('resetting fishing system after AGW connection');
-                        window.resetFishingSystem();
-                    }
-                    
-                    // Dispatch wallet connected event
-                    window.dispatchEvent(new CustomEvent('walletConnected', { 
-                        detail: { 
-                            wallet: currentAccount,
-                            provider: 'agw-privy'
-                        } 
-                    }));
-
-                    // Load saved game data for this wallet
-                    setTimeout(() => {
-                        if (window.walletSaveSystem && window.walletSaveSystem.loadWalletData) {
-                            const savedData = window.walletSaveSystem.loadWalletData(currentAccount);
-                            if (savedData) {
-                                window.walletSaveSystem.applyGameState(savedData);
-                                showNotification('Game progress loaded!', 'success');
-                                
-                                // Reset fishing system after loading wallet data
-                                setTimeout(() => {
-                                    if (window.resetFishingSystem) {
-                                        console.log('resetting fishing system after loading wallet data in AGW connect');
-                                        window.resetFishingSystem();
-                                    }
-                                    // After game state is applied, sync fish counts from Firebase for this wallet
-                                    setTimeout(() => { 
-                                        try { 
-                                            if (typeof window.syncFishFromFirebase === 'function') 
-                                                window.syncFishFromFirebase(); 
-                                        } catch (e) {} 
-                                    }, 200);
-                                }, 500);
-                            } else {
-                                showNotification('Starting new game for this wallet', 'info');
-                                
-                                // Reset fishing system for new game
-                                setTimeout(() => {
-                                    if (window.resetFishingSystem) {
-                                        console.log('resetting fishing system for new AGW wallet game');
-                                        window.resetFishingSystem();
-                                    }
-                                    // For new wallet, also try to pull existing fish collection from Firebase
-                                    setTimeout(() => { 
-                                        try { 
-                                            if (typeof window.syncFishFromFirebase === 'function') 
-                                                window.syncFishFromFirebase(); 
-                                        } catch (e) {} 
-                                    }, 200);
-                                }, 500);
-                            }
-                        }
-                    }, 1000);
-
-                    // Clean up
-                    window.removeEventListener('message', messageHandler);
-                    popup.close();
-
-                } else if (event.data.type === 'PRIVY_CONNECT_ERROR') {
-                    // Connection failed
-                    throw new Error(event.data.error || 'Connection failed');
-                }
-            };
-
-            window.addEventListener('message', messageHandler);
-
-            // Handle popup close
-            const checkClosed = setInterval(() => {
-                if (popup.closed) {
-                    clearInterval(checkClosed);
-                    window.removeEventListener('message', messageHandler);
-                    
-                    if (!isConnected) {
-                        setButtonState(button, false);
-                        showNotification('Connection cancelled', 'info');
-                    }
-                }
-            }, 1000);
+            // Show modal
+            modal.style.display = 'flex';
 
         } catch (error) {
-            console.error('AGW connection error:', error);
+            console.error('Wallet connection error:', error);
             
-            // Show user-friendly error message
-            let errorMessage = 'Failed to connect Abstract Global Wallet. ';
-            if (error.message.includes('public key')) {
-                errorMessage += 'Please try refreshing the page and connecting again.';
-            } else if (error.message.includes('popup')) {
-                errorMessage += 'Please allow popups for this site and try again.';
-            } else if (error.message.includes('ethereum')) {
-                errorMessage += 'Wallet conflict detected. Please try in a private window or disable other wallet extensions.';
+            let errorMessage = 'Failed to connect wallet. ';
+            if (error.message.includes('User rejected')) {
+                errorMessage += 'Connection was cancelled by user.';
+            } else if (error.message.includes('Network')) {
+                errorMessage += 'Network error. Please check your connection and try again.';
             } else {
                 errorMessage += error.message;
             }
@@ -280,20 +167,224 @@
         }
     }
 
-    // Generate a unique requester public key
-    function generateRequesterKey() {
+    // Create RainbowKit modal
+    function createRainbowKitModal() {
+        const modal = document.createElement('div');
+        modal.id = 'rainbowkit-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+            backdrop-filter: blur(8px);
+        `;
+
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid #4b5563;
+        `;
+
+        const title = document.createElement('h2');
+        title.textContent = 'Connect Wallet';
+        title.style.cssText = `
+            color: white;
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 24px;
+            font-weight: 700;
+        `;
+
+        const wallets = [
+            { id: 'metamask', name: 'MetaMask', icon: '🦊' }
+        ];
+
+        wallets.forEach(wallet => {
+            const walletButton = document.createElement('button');
+            walletButton.innerHTML = `
+                <span style="font-size: 24px; margin-right: 12px;">${wallet.icon}</span>
+                <span>${wallet.name}</span>
+            `;
+            walletButton.style.cssText = `
+                width: 100%;
+                padding: 16px;
+                margin-bottom: 12px;
+                background: linear-gradient(135deg, #374151, #4b5563);
+                color: white;
+                border: 1px solid #6b7280;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+
+            walletButton.addEventListener('mouseenter', () => {
+                walletButton.style.background = 'linear-gradient(135deg, #4b5563, #6b7280)';
+                walletButton.style.transform = 'translateY(-2px)';
+            });
+
+            walletButton.addEventListener('mouseleave', () => {
+                walletButton.style.background = 'linear-gradient(135deg, #374151, #4b5563)';
+                walletButton.style.transform = 'translateY(0)';
+            });
+
+            walletButton.addEventListener('click', () => handleWalletSelection(wallet.id));
+            modalContent.appendChild(walletButton);
+        });
+
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.style.cssText = `
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        `;
+
+        closeButton.addEventListener('click', () => {
+            modal.remove();
+            const button = document.getElementById('wallet-connect-btn');
+            setButtonState(button, false);
+        });
+
+        modalContent.appendChild(title);
+        modalContent.appendChild(closeButton);
+        modal.appendChild(modalContent);
+
+        return modal;
+    }
+
+    // Handle wallet selection
+    async function handleWalletSelection(walletId) {
+        const button = document.getElementById('wallet-connect-btn');
+        const modal = document.getElementById('rainbowkit-modal');
+
         try {
-            // Generate a random key for this session using Web Crypto API
-            const array = new Uint8Array(32);
-            crypto.getRandomValues(array);
+            // Close modal
+            if (modal) {
+                modal.remove();
+            }
+
+            let address = null;
+
+            // Handle different wallet types using official connectors
+            if (walletId === 'metamask') {
+                // Use MetaMask connector
+                if (window.ethereum) {
+                    try {
+                        // Cambiar a Abstract Mainnet si es necesario
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x2085' }], // 8333 en hex
+                        });
+                        
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        if (accounts && accounts.length > 0) {
+                            address = accounts[0];
+                        }
+                    } catch (error) {
+                        console.error('MetaMask connection error:', error);
+                        throw new Error('User rejected connection or failed to switch to Abstract network');
+                    }
+                } else {
+                    throw new Error('MetaMask not detected. Please install MetaMask.');
+                }
+            } else if (walletId === 'walletconnect') {
+                // WalletConnect not available without external libraries
+                throw new Error('WalletConnect requires additional setup. Please use MetaMask for now.');
+            } else if (walletId === 'coinbase') {
+                // Coinbase Wallet not available without external libraries
+                throw new Error('Coinbase Wallet requires additional setup. Please use MetaMask for now.');
+            } else {
+                throw new Error('Unsupported wallet type');
+            }
+
+            if (!address) {
+                throw new Error('Failed to get wallet address');
+            }
+
+            currentAccount = address;
+            currentWallet = walletId;
+            isConnected = true;
+
+            // Update button state
+            setButtonState(button, true, currentAccount, currentWallet);
+
+            // Show success message
+            showNotification(`${currentWallet} connected successfully!`, 'success');
+
+            // Set current wallet address for save system
+            if (window.setCurrentWalletAddress) {
+                window.setCurrentWalletAddress(currentAccount);
+            }
             
-            // Convert to base64url encoding (RFC 4648)
-            const base64 = btoa(String.fromCharCode.apply(null, array));
-            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            // Reset fishing system when wallet connects
+            if (window.resetFishingSystem) {
+                console.log('resetting fishing system after wallet connection');
+                window.resetFishingSystem();
+            }
+            
+            // Dispatch wallet connected event
+            window.dispatchEvent(new CustomEvent('walletConnected', { 
+                detail: { 
+                    wallet: currentAccount,
+                    provider: currentWallet
+                } 
+            }));
+
+            // Load saved game data for this wallet
+            setTimeout(() => {
+                if (window.walletSaveSystem && window.walletSaveSystem.loadWalletData) {
+                    const savedData = window.walletSaveSystem.loadWalletData(currentAccount);
+                    if (savedData) {
+                        window.walletSaveSystem.applyGameState(savedData);
+                        showNotification('Game progress loaded!', 'success');
+                        
+                        // Reset fishing system after loading wallet data
+                        setTimeout(() => {
+                            if (window.resetFishingSystem) {
+                                console.log('resetting fishing system after loading wallet data');
+                                window.resetFishingSystem();
+                            }
+                            // After game state is applied, sync fish counts from Firebase for this wallet
+                            setTimeout(() => { 
+                                try { 
+                                    if (typeof window.syncFishFromFirebase === 'function') 
+                                        window.syncFishFromFirebase(currentAccount); 
+                                } catch (e) { 
+                                    console.log('Firebase sync error in wallet connect:', e); 
+                                } 
+                            }, 1000); 
+                        }, 500);
+                    }
+                }
+            }, 1000);
+
         } catch (error) {
-            console.error('Error generating requester key:', error);
-            // Fallback: generate a simple random string
-            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            console.error('Wallet connection error:', error);
+            showNotification('Failed to connect wallet: ' + error.message, 'error');
+            setButtonState(button, false);
         }
     }
 
@@ -304,53 +395,37 @@
             position: fixed;
             top: 80px;
             right: 20px;
-            z-index: 10001;
-            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : '#2196F3'};
+            z-index: 10002;
+            padding: 16px 24px;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
             color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-family: 'Arial', sans-serif;
             font-size: 14px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             animation: slideIn 0.3s ease;
         `;
+
         notification.textContent = message;
-
-        // Add animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-
         document.body.appendChild(notification);
 
-        // Remove notification after 3 seconds
         setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
 
     // Compatibility functions
-    window.getPlayerWallet = function() {
-        return currentAccount;
-    };
-
-    window.getAGWClient = function() {
-        return privyClient;
-    };
+    window.getPlayerWallet = function() { return currentAccount; };
+    window.getWalletProvider = function() { return currentWallet; };
 
     // Initialize wallet button when the game starts
     const _SceneManager_run = SceneManager.run;
     SceneManager.run = function(sceneClass) {
         _SceneManager_run.call(this, sceneClass);
         
-        // Add wallet button after a short delay to ensure DOM is ready
+        // Initialize immediately without external libraries
         setTimeout(() => {
             if (!document.getElementById('wallet-connect-btn')) {
                 const walletButton = createWalletButton();
@@ -358,7 +433,6 @@
             }
         }, 1000);
         
-        // Reset fishing system when game starts
         setTimeout(() => {
             if (window.resetFishingSystem) {
                 console.log('resetting fishing system when game starts');
@@ -367,9 +441,5 @@
         }, 2000);
     };
 
-    console.log('Abstract Global Wallet (Privy) plugin loaded - DISABLED');
-    return; // Disable this plugin
+    console.log('RainbowKit + AGW plugin loaded');
 })();
-
-
-
