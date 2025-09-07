@@ -113,20 +113,14 @@
     async function connectAGW() {
         const button = document.getElementById('wallet-connect-btn');
         
-        // Prevent wallet conflicts by temporarily disabling other providers
-        const originalEthereum = window.ethereum;
-        
         try {
             button.textContent = 'Connecting...';
             button.disabled = true;
 
+            // Check if we can safely proceed without conflicts
             if (window.ethereum && window.ethereum.isMetaMask) {
-                console.log('Temporarily disabling MetaMask to prevent conflicts');
-                Object.defineProperty(window, 'ethereum', {
-                    value: undefined,
-                    writable: true,
-                    configurable: true
-                });
+                console.log('MetaMask detected - proceeding with AGW connection');
+                // Don't try to disable MetaMask, just proceed
             }
 
             // Generate a unique requester public key for this session
@@ -269,25 +263,14 @@
         } catch (error) {
             console.error('AGW connection error:', error);
             
-            // Restore original ethereum provider if it was disabled
-            if (originalEthereum) {
-                try {
-                    Object.defineProperty(window, 'ethereum', {
-                        value: originalEthereum,
-                        writable: true,
-                        configurable: true
-                    });
-                } catch (restoreError) {
-                    console.warn('Could not restore original ethereum provider:', restoreError);
-                }
-            }
-            
             // Show user-friendly error message
             let errorMessage = 'Failed to connect Abstract Global Wallet. ';
             if (error.message.includes('public key')) {
                 errorMessage += 'Please try refreshing the page and connecting again.';
             } else if (error.message.includes('popup')) {
                 errorMessage += 'Please allow popups for this site and try again.';
+            } else if (error.message.includes('ethereum')) {
+                errorMessage += 'Wallet conflict detected. Please try in a private window or disable other wallet extensions.';
             } else {
                 errorMessage += error.message;
             }
