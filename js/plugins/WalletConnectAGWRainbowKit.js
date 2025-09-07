@@ -565,5 +565,6 @@
         });
     };
 
-    console.log('Abstract Global Wallet + RainbowKit (Official) plugin loaded');
+    console.log('Abstract Global Wallet + RainbowKit (Official) plugin loaded - DISABLED');
+    return; // Disable this plugin
 })();
