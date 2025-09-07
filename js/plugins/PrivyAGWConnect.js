@@ -5,9 +5,9 @@
     let isConnected = false;
     let currentAccount = null;
 
-    console.log('PrivyAGWConnect: Simple popup method for AGW connection');
+    console.log('PrivyAGWConnect: Cross-app connect method for AGW');
 
-    // Connect to Abstract Global Wallet via Privy popup
+    // Connect to Abstract Global Wallet via Privy cross-app connect
     async function connectAGW() {
         const button = document.getElementById('wallet-connect-btn');
         
@@ -15,41 +15,15 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Try to get the connected wallet address first
-            let requesterPublicKey = null;
-            
-            // Check if there's a wallet already connected
-            if (window.ethereum && window.ethereum.selectedAddress) {
-                requesterPublicKey = window.ethereum.selectedAddress;
-                console.log('Found connected wallet address:', requesterPublicKey);
-            } else if (window.ethereum) {
-                try {
-                    // Try to get accounts
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        requesterPublicKey = accounts[0];
-                        console.log('Found wallet account:', requesterPublicKey);
-                    }
-                } catch (error) {
-                    console.log('Could not get wallet accounts:', error);
-                }
-            }
-            
-            // If no wallet is connected, generate a temporary key
-            if (!requesterPublicKey) {
-                requesterPublicKey = await generateRequesterKey();
-                console.log('No wallet connected, using temporary key:', requesterPublicKey);
-            }
-            
-            console.log('Using as public key for Privy AGW connection:', requesterPublicKey);
-            console.log('Key type:', typeof requesterPublicKey);
-            console.log('Key is valid Ethereum address:', /^0x[a-fA-F0-9]{40}$/.test(requesterPublicKey));
+            // Generate a proper requester public key for Privy
+            const requesterPublicKey = await generateRequesterKey();
+            console.log('Generated requester public key:', requesterPublicKey);
             
             // Get the current origin
             const requesterOrigin = window.location.origin;
             console.log('Requester origin:', requesterOrigin);
             
-            // Create the Privy connection URL
+            // Create the Privy cross-app connect URL
             const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
                 `requester_public_key=${encodeURIComponent(requesterPublicKey)}&` +
                 `connect=true&` +
@@ -57,7 +31,7 @@
                 `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
                 `smart_wallet_mode=false`;
 
-            console.log('Opening Privy connection:', privyUrl);
+            console.log('Opening Privy cross-app connect:', privyUrl);
 
             // Open Privy connection in a popup window
             const popup = window.open(
@@ -106,7 +80,7 @@
                     window.dispatchEvent(new CustomEvent('walletConnected', { 
                         detail: { 
                             wallet: currentAccount,
-                            provider: 'agw-privy-popup'
+                            provider: 'agw-privy-cross-app'
                         } 
                     }));
 
@@ -178,6 +152,17 @@
                 }
             }, 1000);
 
+            // Timeout after 5 minutes
+            setTimeout(() => {
+                if (!isConnected) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                    popup.close();
+                    setButtonState(button, false);
+                    showNotification('Connection timeout', 'error');
+                }
+            }, 300000); // 5 minutes
+
         } catch (error) {
             console.error('AGW connection error:', error);
             
@@ -196,29 +181,48 @@
         }
     }
 
-    // Generate a unique requester public key
+    // Generate a unique requester public key for Privy cross-app connect
     async function generateRequesterKey() {
         try {
-            // Generate a simple random key that Privy can accept
-            // Privy cross-app connect expects a base64 encoded string
-            const array = new Uint8Array(32);
-            crypto.getRandomValues(array);
+            // Generate a proper ECDSA P-256 public key for Privy
+            const keyPair = await crypto.subtle.generateKey(
+                {
+                    name: 'ECDSA',
+                    namedCurve: 'P-256'
+                },
+                true,
+                ['sign', 'verify']
+            );
+
+            // Export the public key in SPKI format
+            const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
             
             // Convert to base64
-            const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
+            const publicKeyBase64 = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(publicKeyBuffer))));
             
-            console.log('Generated simple key for Privy:', base64);
-            console.log('Key length:', base64.length);
+            console.log('Generated ECDSA P-256 public key for Privy:', publicKeyBase64);
+            console.log('Key length:', publicKeyBase64.length);
             
-            return base64;
+            return publicKeyBase64;
         } catch (error) {
-            console.error('Error generating key:', error);
+            console.error('Error generating ECDSA key:', error);
             
-            // Fallback: Use a simple base64 string
-            const fallbackKey = 'dGVzdC1rZXktZm9yLXByaXZ5LWNvbm5lY3Rpb24tdGVzdA==';
-            
-            console.log('Using fallback key:', fallbackKey);
-            return fallbackKey;
+            // Fallback: Generate a simple random key
+            try {
+                const array = new Uint8Array(32);
+                crypto.getRandomValues(array);
+                const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
+                
+                console.log('Using fallback random key:', base64);
+                return base64;
+            } catch (fallbackError) {
+                console.error('Error generating fallback key:', fallbackError);
+                
+                // Final fallback: Use a fixed test key
+                const fallbackKey = 'dGVzdC1rZXktZm9yLXByaXZ5LWNvbm5lY3Rpb24tdGVzdA==';
+                console.log('Using final fallback key:', fallbackKey);
+                return fallbackKey;
+            }
         }
     }
 
