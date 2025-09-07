@@ -48,49 +48,19 @@
 
     // Load required libraries dynamically
     async function loadLibraries() {
-        return new Promise((resolve, reject) => {
-            const libraries = [
-                'https://unpkg.com/@tanstack/react-query@latest/dist/index.umd.js',
-                'https://unpkg.com/viem@2.x/dist/index.umd.js',
-                'https://unpkg.com/wagmi@latest/dist/index.umd.js',
-                'https://unpkg.com/@rainbow-me/rainbowkit@latest/dist/index.umd.js'
-            ];
-
-            let loadedCount = 0;
-            const totalLibraries = libraries.length;
-
-            libraries.forEach((src, index) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    loadedCount++;
-                    console.log(`Loaded library ${index + 1}/${totalLibraries}: ${src}`);
-                    if (loadedCount === totalLibraries) {
-                        console.log('All RainbowKit libraries loaded successfully');
-                        resolve();
-                    }
-                };
-                script.onerror = () => {
-                    console.error(`Failed to load library: ${src}`);
-                    reject(new Error(`Failed to load library: ${src}`));
-                };
-                document.head.appendChild(script);
-            });
+        return new Promise((resolve) => {
+            // Skip library loading for now - use native wallet APIs
+            console.log('Using native wallet APIs instead of external libraries');
+            resolve();
         });
     }
 
-    // Initialize Wagmi configuration
+    // Initialize configuration (simplified)
     function initializeWagmiConfig() {
         try {
-            if (!window.viem || !window.wagmi) {
-                throw new Error('Required libraries not loaded');
-            }
-
-            const { createConfig, http } = window.wagmi;
-
-            // Configure supported chains - Solo Abstract Mainnet
-            const chains = [
-                {
+            // Simple configuration without external libraries
+            wagmiConfig = {
+                chains: [{
                     id: 8333,
                     name: 'Abstract Mainnet',
                     network: 'abstract',
@@ -102,47 +72,14 @@
                     blockExplorers: {
                         default: { name: 'Abstract Explorer', url: 'https://explorer.abs.xyz' }
                     }
-                }
-            ];
-
-            // Configure transports - Solo Abstract Mainnet
-            const transports = {
-                [8333]: http('https://api.abs.xyz')
+                }],
+                connectors: []
             };
 
-            // Create wagmi config
-            wagmiConfig = createConfig({
-                chains,
-                transports,
-                connectors: [
-                    // MetaMask connector
-                    new window.wagmi.connectors.metaMask({
-                        chains,
-                        options: {
-                            shimDisconnect: true,
-                        },
-                    }),
-                    // WalletConnect connector
-                    new window.wagmi.connectors.walletConnect({
-                        chains,
-                        options: {
-                            projectId: '67c0edae1f9b9919fa118e211f2535a1',
-                        },
-                    }),
-                    // Coinbase Wallet connector
-                    new window.wagmi.connectors.coinbaseWallet({
-                        chains,
-                        options: {
-                            appName: 'Penguin Fishing Club',
-                        },
-                    }),
-                ],
-            });
-
-            console.log('Wagmi configuration initialized successfully');
+            console.log('Configuration initialized successfully');
             return true;
         } catch (error) {
-            console.error('Failed to initialize Wagmi config:', error);
+            console.error('Failed to initialize config:', error);
             return false;
         }
     }
@@ -191,7 +128,7 @@
         return button;
     }
 
-    // Connect wallet using RainbowKit
+    // Connect wallet using native APIs
     async function connectWallet() {
         const button = document.getElementById('wallet-connect-btn');
         
@@ -199,19 +136,14 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Load libraries if not already loaded
-            if (!window.wagmi || !window.RainbowKitProvider) {
-                await loadLibraries();
-            }
-
             // Initialize configurations
             if (!wagmiConfig) {
                 if (!initializeWagmiConfig()) {
-                    throw new Error('Failed to initialize Wagmi configuration');
+                    throw new Error('Failed to initialize configuration');
                 }
             }
 
-            // Create RainbowKit modal
+            // Create wallet selection modal
             const modal = createRainbowKitModal();
             document.body.appendChild(modal);
 
@@ -275,9 +207,7 @@
         `;
 
         const wallets = [
-            { id: 'metamask', name: 'MetaMask', icon: '🦊' },
-            { id: 'walletconnect', name: 'WalletConnect', icon: '🔗' },
-            { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔵' }
+            { id: 'metamask', name: 'MetaMask', icon: '🦊' }
         ];
 
         wallets.forEach(wallet => {
@@ -381,33 +311,11 @@
                     throw new Error('MetaMask not detected. Please install MetaMask.');
                 }
             } else if (walletId === 'walletconnect') {
-                // Use WalletConnect connector
-                try {
-                    const connector = wagmiConfig.connectors.find(c => c.id === 'walletConnect');
-                    if (connector) {
-                        const result = await connector.connect();
-                        address = result.accounts[0];
-                    } else {
-                        throw new Error('WalletConnect connector not found');
-                    }
-                } catch (error) {
-                    console.error('WalletConnect error:', error);
-                    throw error;
-                }
+                // WalletConnect not available without external libraries
+                throw new Error('WalletConnect requires additional setup. Please use MetaMask for now.');
             } else if (walletId === 'coinbase') {
-                // Use Coinbase Wallet connector
-                try {
-                    const connector = wagmiConfig.connectors.find(c => c.id === 'coinbaseWallet');
-                    if (connector) {
-                        const result = await connector.connect();
-                        address = result.accounts[0];
-                    } else {
-                        throw new Error('Coinbase Wallet connector not found');
-                    }
-                } catch (error) {
-                    console.error('Coinbase Wallet error:', error);
-                    throw error;
-                }
+                // Coinbase Wallet not available without external libraries
+                throw new Error('Coinbase Wallet requires additional setup. Please use MetaMask for now.');
             } else {
                 throw new Error('Unsupported wallet type');
             }
@@ -517,24 +425,20 @@
     SceneManager.run = function(sceneClass) {
         _SceneManager_run.call(this, sceneClass);
         
-        // Load libraries and initialize
-        loadLibraries().then(() => {
-            setTimeout(() => {
-                if (!document.getElementById('wallet-connect-btn')) {
-                    const walletButton = createWalletButton();
-                    document.body.appendChild(walletButton);
-                }
-            }, 1000);
-            setTimeout(() => {
-                if (window.resetFishingSystem) {
-                    console.log('resetting fishing system when game starts');
-                    window.resetFishingSystem();
-                }
-            }, 2000);
-        }).catch(error => {
-            console.error('Failed to load RainbowKit libraries:', error);
-            showNotification('Failed to initialize wallet connection.', 'error');
-        });
+        // Initialize immediately without external libraries
+        setTimeout(() => {
+            if (!document.getElementById('wallet-connect-btn')) {
+                const walletButton = createWalletButton();
+                document.body.appendChild(walletButton);
+            }
+        }, 1000);
+        
+        setTimeout(() => {
+            if (window.resetFishingSystem) {
+                console.log('resetting fishing system when game starts');
+                window.resetFishingSystem();
+            }
+        }, 2000);
     };
 
     console.log('RainbowKit + AGW plugin loaded');
