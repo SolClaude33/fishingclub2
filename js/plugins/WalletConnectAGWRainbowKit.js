@@ -53,9 +53,7 @@
                 'https://unpkg.com/@tanstack/react-query@latest/dist/index.umd.js',
                 'https://unpkg.com/viem@2.x/dist/index.umd.js',
                 'https://unpkg.com/wagmi@latest/dist/index.umd.js',
-                'https://unpkg.com/@rainbow-me/rainbowkit@latest/dist/index.umd.js',
-                'https://unpkg.com/@abstract-foundation/agw-client@latest/dist/index.umd.js',
-                'https://unpkg.com/@abstract-foundation/agw-react@latest/dist/index.umd.js'
+                'https://unpkg.com/@rainbow-me/rainbowkit@latest/dist/index.umd.js'
             ];
 
             let loadedCount = 0;
@@ -117,10 +115,6 @@
                 chains,
                 transports,
                 connectors: [
-                    // Abstract Global Wallet connector (Principal)
-                    new window.wagmi.connectors.abstractWallet({
-                        chains,
-                    }),
                     // MetaMask connector (Para usuarios que quieran usar MetaMask en Abstract)
                     new window.wagmi.connectors.metaMask({
                         chains,
@@ -133,6 +127,13 @@
                         chains,
                         options: {
                             projectId: window.AGWRainbowKitConfig?.projectId || 'your-project-id',
+                        },
+                    }),
+                    // Coinbase Wallet connector
+                    new window.wagmi.connectors.coinbaseWallet({
+                        chains,
+                        options: {
+                            appName: window.AGWRainbowKitConfig?.appName || 'Penguin Fishing Club',
                         },
                     }),
                 ],
@@ -302,9 +303,9 @@
         `;
 
         const wallets = [
-            { id: 'agw', name: 'Abstract Global Wallet', icon: '🌐' },
             { id: 'metamask', name: 'MetaMask', icon: '🦊' },
-            { id: 'walletconnect', name: 'WalletConnect', icon: '🔗' }
+            { id: 'walletconnect', name: 'WalletConnect', icon: '🔗' },
+            { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔵' }
         ];
 
         wallets.forEach(wallet => {
@@ -386,21 +387,7 @@
             let address = null;
 
             // Handle different wallet types using official connectors
-            if (walletId === 'agw') {
-                // Use Abstract Global Wallet connector (Principal)
-                try {
-                    const connector = wagmiConfig.connectors.find(c => c.id === 'abstractWallet');
-                    if (connector) {
-                        const result = await connector.connect();
-                        address = result.accounts[0];
-                    } else {
-                        throw new Error('Abstract Global Wallet connector not found');
-                    }
-                } catch (error) {
-                    console.error('AGW connection error:', error);
-                    throw error;
-                }
-            } else if (walletId === 'metamask') {
+            if (walletId === 'metamask') {
                 // Use MetaMask connector para Abstract
                 if (window.ethereum) {
                     try {
@@ -433,6 +420,20 @@
                     }
                 } catch (error) {
                     console.error('WalletConnect error:', error);
+                    throw error;
+                }
+            } else if (walletId === 'coinbase') {
+                // Use Coinbase Wallet connector
+                try {
+                    const connector = wagmiConfig.connectors.find(c => c.id === 'coinbaseWallet');
+                    if (connector) {
+                        const result = await connector.connect();
+                        address = result.accounts[0];
+                    } else {
+                        throw new Error('Coinbase Wallet connector not found');
+                    }
+                } catch (error) {
+                    console.error('Coinbase Wallet error:', error);
                     throw error;
                 }
             } else {
@@ -564,6 +565,5 @@
         });
     };
 
-    console.log('Abstract Global Wallet + RainbowKit (Official) plugin loaded - TEMPORARILY DISABLED');
-    return; // Disable this plugin temporarily
+    console.log('Abstract Global Wallet + RainbowKit (Official) plugin loaded');
 })();
