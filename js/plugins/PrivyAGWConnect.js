@@ -168,11 +168,14 @@
 
     // Generate a unique requester public key
     function generateRequesterKey() {
-        // Generate a random key for this session
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        // Convert to base64 properly - this is the correct way for Privy
-        return btoa(String.fromCharCode.apply(null, Array.from(array)));
+        // For debugging, let's try a known working key format
+        // This is a test key that should work with Privy
+        const testKey = 'dGVzdC1rZXktZm9yLWRlYnVnZ2luZy1wdXJwb3Nlcy1vbmx5';
+        
+        console.log('Using test key for debugging:', testKey);
+        console.log('Key length:', testKey.length);
+        
+        return testKey;
     }
 
     // Function to set button state
