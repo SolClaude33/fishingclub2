@@ -1,16 +1,16 @@
 //=============================================================================
-// RPG Maker MZ - Abstract Global Wallet Connect Plugin (via Privy)
+// RPG Maker MZ - Abstract Global Wallet Connect Plugin (Official SDK)
 //=============================================================================
 
 /*:
  * @target MZ
- * @plugindesc Adds Abstract Global Wallet integration via Privy.
+ * @plugindesc Adds Abstract Global Wallet integration using official AGW SDK.
  * @author Assistant
  *
  * @help WalletConnect.js
  *
- * This plugin integrates Abstract Global Wallet using Privy authentication.
- * It opens the Privy connection window for Abstract Global Wallet.
+ * This plugin integrates Abstract Global Wallet using the official AGW SDK.
+ * It provides seamless wallet connection and transaction signing.
  *
  * It does not provide plugin commands.
  */
@@ -21,7 +21,8 @@
     // Global state
     let isConnected = false;
     let currentAccount = null;
-    let privyClient = null;
+    let agwClient = null;
+    let agwProvider = null;
 
     // Function to set button state
     function setButtonState(button, connected, account = null) {
@@ -116,8 +117,25 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
+            // Prevent wallet conflicts by temporarily disabling other providers
+            const originalEthereum = window.ethereum;
+            if (window.ethereum && window.ethereum.isMetaMask) {
+                console.log('Temporarily disabling MetaMask to prevent conflicts');
+                Object.defineProperty(window, 'ethereum', {
+                    value: undefined,
+                    writable: true,
+                    configurable: true
+                });
+            }
+
             // Generate a unique requester public key for this session
             const requesterPublicKey = generateRequesterKey();
+            console.log('Generated requester public key:', requesterPublicKey);
+            
+            // Validate the public key
+            if (!requesterPublicKey || requesterPublicKey.length < 10) {
+                throw new Error('Failed to generate valid requester public key');
+            }
             
             // Get the current origin
             const requesterOrigin = window.location.origin;
@@ -249,17 +267,50 @@
 
         } catch (error) {
             console.error('AGW connection error:', error);
-            alert('Failed to connect Abstract Global Wallet: ' + error.message);
+            
+            // Restore original ethereum provider if it was disabled
+            if (originalEthereum) {
+                try {
+                    Object.defineProperty(window, 'ethereum', {
+                        value: originalEthereum,
+                        writable: true,
+                        configurable: true
+                    });
+                } catch (restoreError) {
+                    console.warn('Could not restore original ethereum provider:', restoreError);
+                }
+            }
+            
+            // Show user-friendly error message
+            let errorMessage = 'Failed to connect Abstract Global Wallet. ';
+            if (error.message.includes('public key')) {
+                errorMessage += 'Please try refreshing the page and connecting again.';
+            } else if (error.message.includes('popup')) {
+                errorMessage += 'Please allow popups for this site and try again.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            showNotification(errorMessage, 'error');
             setButtonState(button, false);
         }
     }
 
     // Generate a unique requester public key
     function generateRequesterKey() {
-        // Generate a random key for this session
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        return btoa(String.fromCharCode.apply(null, array));
+        try {
+            // Generate a random key for this session using Web Crypto API
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            
+            // Convert to base64url encoding (RFC 4648)
+            const base64 = btoa(String.fromCharCode.apply(null, array));
+            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        } catch (error) {
+            console.error('Error generating requester key:', error);
+            // Fallback: generate a simple random string
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        }
     }
 
     // Show notification function
