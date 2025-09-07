@@ -15,10 +15,35 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Generate a temporary public key for Privy connection
-            // We don't want to use MetaMask - we want to go directly to Privy AGW
-            const requesterPublicKey = await generateRequesterKey();
-            console.log('Generated temporary public key for Privy AGW connection:', requesterPublicKey);
+            // Try to get the connected wallet address first
+            let requesterPublicKey = null;
+            
+            // Check if there's a wallet already connected
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                requesterPublicKey = window.ethereum.selectedAddress;
+                console.log('Found connected wallet address:', requesterPublicKey);
+            } else if (window.ethereum) {
+                try {
+                    // Try to get accounts
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        requesterPublicKey = accounts[0];
+                        console.log('Found wallet account:', requesterPublicKey);
+                    }
+                } catch (error) {
+                    console.log('Could not get wallet accounts:', error);
+                }
+            }
+            
+            // If no wallet is connected, generate a temporary key
+            if (!requesterPublicKey) {
+                requesterPublicKey = await generateRequesterKey();
+                console.log('No wallet connected, using temporary key:', requesterPublicKey);
+            }
+            
+            console.log('Using as public key for Privy AGW connection:', requesterPublicKey);
+            console.log('Key type:', typeof requesterPublicKey);
+            console.log('Key is valid Ethereum address:', /^0x[a-fA-F0-9]{40}$/.test(requesterPublicKey));
             
             // Get the current origin
             const requesterOrigin = window.location.origin;
@@ -174,26 +199,26 @@
     // Generate a unique requester public key
     async function generateRequesterKey() {
         try {
-            // Generate a simple random key for Privy connection
-            // Privy will handle the actual wallet connection
+            // Generate a simple random key that Privy can accept
+            // Privy cross-app connect expects a base64 encoded string
             const array = new Uint8Array(32);
             crypto.getRandomValues(array);
             
-            // Convert to base64 (Privy expects base64)
+            // Convert to base64
             const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
             
-            console.log('Generated simple public key for Privy:', base64);
+            console.log('Generated simple key for Privy:', base64);
             console.log('Key length:', base64.length);
             
             return base64;
         } catch (error) {
             console.error('Error generating key:', error);
-            // Fallback to a simple random key
-            const array = new Uint8Array(32);
-            crypto.getRandomValues(array);
-            const fallback = btoa(String.fromCharCode.apply(null, Array.from(array)));
-            console.log('Using fallback key:', fallback);
-            return fallback;
+            
+            // Fallback: Use a simple base64 string
+            const fallbackKey = 'dGVzdC1rZXktZm9yLXByaXZ5LWNvbm5lY3Rpb24tdGVzdA==';
+            
+            console.log('Using fallback key:', fallbackKey);
+            return fallbackKey;
         }
     }
 
