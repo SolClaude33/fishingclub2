@@ -184,37 +184,41 @@
     // Generate a unique requester public key for Privy cross-app connect
     async function generateRequesterKey() {
         try {
-            // Generate a proper ECDSA P-256 public key for Privy
+            // Generate a proper ECDH P-256 key pair for Privy
             const keyPair = await crypto.subtle.generateKey(
                 {
-                    name: 'ECDSA',
+                    name: 'ECDH',
                     namedCurve: 'P-256'
                 },
                 true,
-                ['sign', 'verify']
+                ['deriveKey', 'deriveBits']
             );
 
-            // Export the public key in SPKI format
-            const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+            // Export the public key in raw format (uncompressed)
+            const publicKeyBuffer = await crypto.subtle.exportKey('raw', keyPair.publicKey);
             
-            // Convert to base64
-            const publicKeyBase64 = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(publicKeyBuffer))));
+            // Convert to hex string (uncompressed public key format)
+            const publicKeyHex = Array.from(new Uint8Array(publicKeyBuffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
             
-            console.log('Generated ECDSA P-256 public key for Privy:', publicKeyBase64);
-            console.log('Key length:', publicKeyBase64.length);
+            console.log('Generated ECDH P-256 public key for Privy:', publicKeyHex);
+            console.log('Key length:', publicKeyHex.length);
             
-            return publicKeyBase64;
+            return publicKeyHex;
         } catch (error) {
-            console.error('Error generating ECDSA key:', error);
+            console.error('Error generating ECDH key:', error);
             
             // Fallback: Generate a simple random key
             try {
                 const array = new Uint8Array(32);
                 crypto.getRandomValues(array);
-                const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
+                const hex = Array.from(array)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
                 
-                console.log('Using fallback random key:', base64);
-                return base64;
+                console.log('Using fallback random key:', hex);
+                return hex;
             } catch (fallbackError) {
                 console.error('Error generating fallback key:', fallbackError);
                 
