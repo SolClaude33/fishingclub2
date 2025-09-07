@@ -28,6 +28,11 @@
     // Try to prevent window.ethereum conflicts
     if (window.ethereum && typeof window.ethereum === 'object') {
         console.log('WalletConnect: window.ethereum detected, avoiding conflicts');
+        
+        // Store original ethereum to avoid conflicts
+        if (!window._originalEthereum) {
+            window._originalEthereum = window.ethereum;
+        }
     }
 
     // Connect to Abstract Global Wallet via Privy popup
@@ -186,7 +191,7 @@
             // More specific error handling
             let errorMessage = 'Failed to connect Abstract Global Wallet';
             if (error.message.includes('window.ethereum')) {
-                errorMessage = 'Wallet conflict detected. Please try disabling other wallet extensions temporarily.';
+                errorMessage = 'Wallet conflict detected. Please try:\n1. Disable MetaMask temporarily\n2. Or use incognito mode\n3. Or try a different browser';
             } else if (error.message.includes('popup')) {
                 errorMessage = 'Popup blocked. Please allow popups for this site.';
             } else if (error.message.includes('public key')) {
