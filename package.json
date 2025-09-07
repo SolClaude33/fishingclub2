@@ -23,12 +23,7 @@
     ],
     "author": "Assistant",
     "license": "MIT",
-    "dependencies": {
-    "@abstract-foundation/agw-client": "^0.1.0",
-    "wagmi": "^2.0.0",
-    "viem": "^2.0.0",
-    "@tanstack/react-query": "^5.0.0"
-  },
+    "dependencies": {},
     "chromium-args": "--force-color-profile=srgb",
     "window": {
         "title": "Penguin Fishing Club",
