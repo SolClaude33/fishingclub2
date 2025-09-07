@@ -15,53 +15,10 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // First, try to get the wallet's public key if available
-            let requesterPublicKey = null;
-            
-            // Check if we have access to a connected wallet
-            if (window.ethereum) {
-                try {
-                    // Try to get accounts first
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        console.log('Found connected wallet:', accounts[0]);
-                        
-                        // Try to get the public key from the wallet
-                        try {
-                            const publicKey = await window.ethereum.request({
-                                method: 'eth_getEncryptionPublicKey',
-                                params: [accounts[0]]
-                            });
-                            requesterPublicKey = publicKey;
-                            console.log('Got public key from connected wallet:', requesterPublicKey);
-                        } catch (encryptionError) {
-                            console.log('Could not get encryption public key:', encryptionError);
-                            
-                            // Try alternative method - request personal_sign to get public key
-                            try {
-                                const message = 'Please sign this message to connect to Abstract Global Wallet';
-                                const signature = await window.ethereum.request({
-                                    method: 'personal_sign',
-                                    params: [message, accounts[0]]
-                                });
-                                console.log('Got signature from wallet:', signature);
-                                // For now, we'll use the signature as a fallback
-                                requesterPublicKey = signature;
-                            } catch (signError) {
-                                console.log('Could not get signature from wallet:', signError);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.log('Could not access wallet:', error);
-                }
-            }
-            
-            // If we couldn't get a public key from wallet, generate one
-            if (!requesterPublicKey) {
-                requesterPublicKey = await generateRequesterKey();
-                console.log('Generated fallback public key:', requesterPublicKey);
-            }
+            // Generate a temporary public key for Privy connection
+            // We don't want to use MetaMask - we want to go directly to Privy AGW
+            const requesterPublicKey = await generateRequesterKey();
+            console.log('Generated temporary public key for Privy AGW connection:', requesterPublicKey);
             
             // Get the current origin
             const requesterOrigin = window.location.origin;
@@ -217,51 +174,25 @@
     // Generate a unique requester public key
     async function generateRequesterKey() {
         try {
-            // Generate a real key pair using Web Crypto API with secp256k1 curve
-            // Privy expects secp256k1 curve (same as Bitcoin/Ethereum)
-            const keyPair = await crypto.subtle.generateKey(
-                {
-                    name: "ECDH",
-                    namedCurve: "P-256" // We'll use P-256 but format it correctly
-                },
-                true,
-                ["deriveKey"]
-            );
+            // Generate a simple random key for Privy connection
+            // Privy will handle the actual wallet connection
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
             
-            // Export the public key in raw format
-            const publicKeyBuffer = await crypto.subtle.exportKey("raw", keyPair.publicKey);
-            const publicKeyArray = new Uint8Array(publicKeyBuffer);
+            // Convert to base64 (Privy expects base64)
+            const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
             
-            // For secp256k1, we need to ensure the key is 64 bytes (32 bytes x, 32 bytes y)
-            // Remove the first byte (0x04) if present and ensure we have exactly 64 bytes
-            let keyBytes = publicKeyArray;
-            if (publicKeyArray.length === 65 && publicKeyArray[0] === 0x04) {
-                keyBytes = publicKeyArray.slice(1); // Remove the 0x04 prefix
-            }
+            console.log('Generated simple public key for Privy:', base64);
+            console.log('Key length:', base64.length);
             
-            // Pad or truncate to exactly 64 bytes
-            const paddedKey = new Uint8Array(64);
-            if (keyBytes.length >= 64) {
-                paddedKey.set(keyBytes.slice(0, 64));
-            } else {
-                paddedKey.set(keyBytes);
-            }
-            
-            // Convert to hex (Privy might expect hex format)
-            const hex = Array.from(paddedKey, byte => byte.toString(16).padStart(2, '0')).join('');
-            
-            console.log('Generated secp256k1-style public key (hex):', hex);
-            console.log('Key length:', hex.length);
-            console.log('Original key length:', publicKeyArray.length);
-            
-            return hex;
+            return base64;
         } catch (error) {
             console.error('Error generating key:', error);
-            // Fallback to a simple random key with correct length
-            const array = new Uint8Array(64); // 64 bytes for secp256k1 public key
+            // Fallback to a simple random key
+            const array = new Uint8Array(32);
             crypto.getRandomValues(array);
-            const fallback = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-            console.log('Using fallback key (hex):', fallback);
+            const fallback = btoa(String.fromCharCode.apply(null, Array.from(array)));
+            console.log('Using fallback key:', fallback);
             return fallback;
         }
     }
