@@ -1,0 +1,486 @@
+image.png<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penguin Fishing Club</title>
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #F5F5DC 0%, #F0E68C 50%, #F5F5DC 100%);
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background-image: url('background.gif');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 600px;image.png
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+            border: 3px solid #654321;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 
+                0 6px 0 #654321,
+                0 4px 8px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #654321;
+            text-transform: uppercase;
+        }
+
+        .eula-section {
+            background: linear-gradient(135deg, #FFF8DC 0%, #F5DEB3 50%, #FFF8DC 100%);
+            border: 3px solid #8B4513;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 
+                0 4px 0 #8B4513,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .eula-title {
+            color: #8B4513;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+            text-align: center;
+            text-shadow: 1px 1px 0px #F5DEB3;
+        }
+
+        .eula-content {
+            background: linear-gradient(135deg, #DEB887 0%, #D2B48C 50%, #DEB887 100%);
+            border: 3px solid #8B4513;
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 100px;
+            max-width: 400px;
+            margin: 0 auto 25px auto;
+            overflow-y: auto;
+            box-shadow: 
+                0 4px 0 #8B4513,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .eula-content h3 {
+            color: #8B4513;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+            text-shadow: 1px 1px 0px #F5DEB3;
+        }
+
+        .eula-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .eula-content p {
+            color: #556B2F;
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 0 0 10px 0;
+        }
+
+        .eula-content ul {
+            color: #556B2F;
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 0 0 10px 15px;
+        }
+
+        .eula-content li {
+            margin-bottom: 5px;
+        }
+
+        .checkbox-container {
+            background: linear-gradient(135deg, #DEB887 0%, #D2B48C 50%, #DEB887 100%);
+            border: 3px solid #8B4513;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 
+                0 4px 0 #8B4513,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .checkbox-container label {
+            color: #8B4513;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0px #F5DEB3;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+            color: white;
+            border: 3px solid #654321;
+            border-radius: 12px;
+            padding: 8px 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 4px 0 #654321,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 0 #654321, 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .btn:disabled {
+            background: linear-gradient(135deg, #666 0%, #888 50%, #666 100%);
+            border-color: #444;
+            color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 0 #444, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .btn-accept {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #4CAF50 100%);
+            border-color: #2E7D32;
+        }
+
+        .btn-accept:hover {
+            background: linear-gradient(135deg, #45a049 0%, #4CAF50 50%, #45a049 100%);
+            box-shadow: 0 5px 0 #2E7D32, 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .btn-decline {
+            background: linear-gradient(135deg, #F44336 0%, #d32f2f 50%, #F44336 100%);
+            border-color: #c62828;
+        }
+
+        .btn-decline:hover {
+            background: linear-gradient(135deg, #d32f2f 0%, #F44336 50%, #d32f2f 100%);
+            box-shadow: 0 5px 0 #c62828, 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .play-container {
+            display: none;
+            text-align: center;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .play-container img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .play-button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #4CAF50 100%);
+            color: white;
+            border: 3px solid #2E7D32;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 4px 0 #2E7D32,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .play-button:hover {
+            background: linear-gradient(135deg, #45a049 0%, #4CAF50 50%, #45a049 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 0 #2E7D32, 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .play-button:active {
+            transform: translateY(0px);
+            box-shadow: 0 3px 0 #2E7D32, 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .loading-circle {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 1000;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Scrollbar styling */
+        .eula-content::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .eula-content::-webkit-scrollbar-track {
+            background: #F5DEB3;
+            border-radius: 6px;
+            border: 1px solid #8B4513;
+        }
+
+        .eula-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #DEB887 0%, #D2B48C 50%, #DEB887 100%);
+            border-radius: 6px;
+            border: 1px solid #8B4513;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .eula-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #D2B48C 0%, #CD853F 50%, #D2B48C 100%);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .eula-content {
+                padding: 20px;
+                max-height: 300px;
+            }
+            
+            .button-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="eula-section">
+            <div class="header">
+                <h1>Penguin Fishing Club</h1>
+            </div>
+            <h2 class="eula-title">End User License Agreement</h2>
+            
+            <div class="eula-content">
+                <h3>1. Acceptance of Terms</h3>
+                <p>By accessing and playing Penguin Fishing Club, you agree to be bound by the terms and conditions of this End User License Agreement (EULA). If you do not agree to these terms, do not use the game.</p>
+
+                <h3>2. License Grant</h3>
+                <p>Subject to your compliance with this EULA, you are granted a limited, non-exclusive, non-transferable license to use Penguin Fishing Club for personal, non-commercial entertainment purposes only.</p>
+
+                <h3>3. Restrictions</h3>
+                <p>You may not:</p>
+                <ul>
+                    <li>Copy, modify, or distribute the game or its components</li>
+                    <li>Reverse engineer, decompile, or disassemble the game</li>
+                    <li>Use the game for commercial purposes</li>
+                    <li>Create derivative works based on the game</li>
+                    <li>Remove or alter any copyright, trademark, or proprietary notices</li>
+                </ul>
+
+                <h3>4. Intellectual Property</h3>
+                <p>Penguin Fishing Club and all its content, including but not limited to graphics, audio, text, and software, are protected by copyright, trademark, and other intellectual property laws. All rights are reserved.</p>
+
+                <h3>5. User Content</h3>
+                <p>You retain ownership of any content you create while using the game. By using the game, you grant a non-exclusive license to use, reproduce, and distribute your content within the game environment.</p>
+
+                <h3>6. Privacy</h3>
+                <p>The game may collect and store certain information for gameplay purposes. This information is used solely to enhance your gaming experience and is not shared with third parties without your consent.</p>
+
+                <h3>7. Disclaimers</h3>
+                <p>The game is provided "as is" without warranties of any kind. The developers are not responsible for any damages arising from the use of the game.</p>
+
+                <h3>8. Limitation of Liability</h3>
+                <p>In no event shall the developers be liable for any indirect, incidental, special, or consequential damages arising from your use of the game.</p>
+
+                <h3>9. Termination</h3>
+                <p>This license terminates automatically if you fail to comply with its terms. Upon termination, you must cease all use of the game.</p>
+
+                <h3>10. Governing Law</h3>
+                <p>This EULA is governed by the laws of the jurisdiction in which the game was developed, without regard to conflict of law principles.</p>
+
+                <h3>11. Changes to EULA</h3>
+                <p>The developers reserve the right to modify this EULA at any time. Continued use of the game after changes constitutes acceptance of the modified terms.</p>
+
+                <h3>12. Contact Information</h3>
+                <p>For questions regarding this EULA, please contact the game developers through the official channels.</p>
+            </div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="acceptEula" required>
+                <label for="acceptEula">I have read and agree to the End User License Agreement</label>
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-accept" id="acceptBtn" disabled onclick="acceptEula()">Accept & Continue</button>
+                <button class="btn btn-decline" onclick="declineEula()">Decline & Exit</button>
+            </div>
+
+            <div class="play-container" id="playContainer">
+                <img src="logo.png" alt="Penguin Fishing Club Logo">
+                <button class="play-button" onclick="startGame()">Play</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="playScreen" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <img src="logo.png" alt="Penguin Fishing Club Logo" style="max-width: 200px; height: auto; margin-bottom: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+            <button class="play-button" onclick="startGame()">Play</button>
+        </div>
+    </div>
+
+    <div class="loading-circle" id="loadingCircle"></div>
+        </div>
+    </div>
+
+    <script>
+        const acceptCheckbox = document.getElementById('acceptEula');
+        const acceptBtn = document.getElementById('acceptBtn');
+        const playContainer = document.getElementById('playContainer');
+
+        // Enable/disable accept button based on checkbox
+        acceptCheckbox.addEventListener('change', function() {
+            acceptBtn.disabled = !this.checked;
+        });
+
+        function acceptEula() {
+            if (!acceptCheckbox.checked) {
+                alert('Please read and accept the EULA to continue.');
+                return;
+            }
+
+            // Store acceptance in localStorage
+            localStorage.setItem('eulaAccepted', 'true');
+            localStorage.setItem('eulaAcceptedDate', new Date().toISOString());
+
+            // Hide all EULA elements
+            document.querySelector('.container').style.display = 'none';
+            
+            // Show loading circle
+            document.getElementById('loadingCircle').style.display = 'block';
+            
+            // Play intro sound
+            try {
+                const introSound = new Audio('audio/bgm/intro.mp3');
+                introSound.volume = 0.7;
+                introSound.play().then(() => {
+                    console.log('Intro audio started playing successfully');
+                }).catch(e => {
+                    console.log('Intro audio play failed:', e);
+                });
+            } catch (error) {
+                console.log('Error creating intro audio:', error);
+            }
+            
+            // Show play screen after 1 second
+            setTimeout(() => {
+                document.getElementById('loadingCircle').style.display = 'none';
+                document.getElementById('playScreen').style.display = 'block';
+            }, 1000);
+        }
+
+        function startGame() {
+            window.location.href = 'game.html';
+        }
+
+        function declineEula() {
+            if (confirm('Are you sure you want to decline the EULA? You will not be able to play Penguin Fishing Club.')) {
+                window.close();
+                // Fallback for browsers that don't support window.close()
+                window.location.href = 'about:blank';
+            }
+        }
+
+        // Check if EULA was already accepted
+        window.addEventListener('load', function() {
+            const eulaAccepted = localStorage.getItem('eulaAccepted');
+            if (eulaAccepted === 'true') {
+                // Check if it was accepted within the last 30 days
+                const acceptedDate = new Date(localStorage.getItem('eulaAcceptedDate'));
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                
+                if (acceptedDate > thirtyDaysAgo) {
+                    // Skip EULA but show play screen first
+                    document.querySelector('.container').style.display = 'none';
+                    document.getElementById('playScreen').style.display = 'block';
+                }
+            }
+        });
+
+        // Prevent right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Prevent keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.altKey || e.metaKey) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
