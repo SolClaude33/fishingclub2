@@ -81,14 +81,64 @@ class ReactWalletConnect {
                 setError(null);
                 
                 try {
-                    await login();
+                    // Force Privy cross-app connect instead of default login
+                    const requesterOrigin = window.location.origin;
+                    const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                        `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                        `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                        `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
+
+                    // Open in popup
+                    const popup = window.open(
+                        privyUrl,
+                        'privy-connect',
+                        'width=500,height=700,scrollbars=yes,resizable=yes'
+                    );
+
+                    if (!popup) {
+                        // Fallback to redirect
+                        window.location.href = privyUrl;
+                        return;
+                    }
+
+                    // Listen for messages from Privy
+                    const messageHandler = (event) => {
+                        if (event.origin !== 'https://privy.abs.xyz' && event.origin !== 'https://dashboard.privy.io') {
+                            return;
+                        }
+
+                        if (event.data.type === 'PRIVY_CONNECT_SUCCESS' || event.data.type === 'CONNECT_SUCCESS' || event.data.type === 'WALLET_CONNECTED') {
+                            const address = event.data.account || event.data.walletAddress || event.data.address;
+                            this.walletAddress = address;
+                            this.isConnected = true;
+                            
+                            if (this.callbacks.onConnect) {
+                                this.callbacks.onConnect(address, event.data.user);
+                            }
+                            
+                            popup.close();
+                            window.removeEventListener('message', messageHandler);
+                            setIsConnecting(false);
+                        }
+                    };
+
+                    window.addEventListener('message', messageHandler);
+
+                    // Check if popup is closed
+                    const checkClosed = setInterval(() => {
+                        if (popup.closed) {
+                            clearInterval(checkClosed);
+                            window.removeEventListener('message', messageHandler);
+                            setIsConnecting(false);
+                        }
+                    }, 1000);
+
                 } catch (error) {
-                    console.error('Login error:', error);
+                    console.error('Connection error:', error);
                     setError('Failed to connect wallet');
                     if (this.callbacks.onError) {
                         this.callbacks.onError(error);
                     }
-                } finally {
                     setIsConnecting(false);
                 }
             };
@@ -141,11 +191,14 @@ class ReactWalletConnect {
             return React.createElement(PrivyProvider, { 
                 appId: "cm04asygd041fmry9zmcyn5o5",
                 config: {
-                    loginMethods: ['wallet', 'email', 'sms'],
+                    loginMethods: ['email', 'sms'], // Remove 'wallet' to avoid MetaMask
                     appearance: {
                         theme: 'light',
                         accentColor: '#676FFF',
                     },
+                    embeddedWallets: {
+                        createOnLogin: 'users-without-wallets'
+                    }
                 }
             }, React.createElement(WalletConnectButton));
         };
