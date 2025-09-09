@@ -109,6 +109,18 @@ class ReactWalletConnect {
                 setTimeout(() => {
                     console.log('🔍 Privy after timeout:', typeof window.PrivyReactAuth);
                     console.log('🔍 window.PrivyReactAuth after timeout:', window.PrivyReactAuth);
+                    
+                    // Extract PrivyProvider from the UMD bundle
+                    if (window.PrivyReactAuth && window.PrivyReactAuth.PrivyProvider) {
+                        window.PrivyProvider = window.PrivyReactAuth.PrivyProvider;
+                        window.usePrivy = window.PrivyReactAuth.usePrivy;
+                        console.log('✅ PrivyProvider extracted:', typeof window.PrivyProvider);
+                    } else {
+                        console.error('❌ PrivyProvider not found in PrivyReactAuth');
+                        reject(new Error('PrivyProvider not found'));
+                        return;
+                    }
+                    
                     this.isPrivyLoaded = true;
                     resolve();
                 }, 100);
@@ -121,7 +133,8 @@ class ReactWalletConnect {
     // Create wallet connect component
     createWalletConnectComponent(containerId) {
         const { useState, useEffect } = React;
-        const { PrivyProvider, usePrivy } = window.PrivyReactAuth;
+        const PrivyProvider = window.PrivyProvider;
+        const usePrivy = window.usePrivy;
 
         const WalletConnectButton = () => {
             console.log('🎨 WalletConnectButton component rendering...');
