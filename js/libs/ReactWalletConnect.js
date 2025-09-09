@@ -349,6 +349,9 @@ class ReactWalletConnect {
                         `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
                         `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
 
+                    console.log('🔧 Opening Privy URL:', privyUrl);
+                    console.log('🔧 Requester origin:', requesterOrigin);
+
                     // Open in popup
                     const popup = window.open(
                         privyUrl,
@@ -357,10 +360,13 @@ class ReactWalletConnect {
                     );
 
                     if (!popup) {
+                        console.log('🔧 Popup blocked, redirecting instead');
                         // Fallback to redirect
                         window.location.href = privyUrl;
                         return;
                     }
+
+                    console.log('✅ Popup opened successfully');
 
                     // Listen for messages from Privy
                     const messageHandler = (event) => {
