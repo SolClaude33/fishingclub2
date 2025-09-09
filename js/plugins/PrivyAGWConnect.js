@@ -58,11 +58,14 @@
 
     console.log('🚀 PrivyAGWConnect: React-based AGW connection initialized');
     console.log('🔧 Plugin parameters:', { appId, buttonText, buttonPosition, useReact });
+    console.log('🔥 FORZANDO ACTUALIZACION - VERSION 2.0.1');
 
     // Load React Wallet Connect library
     function loadReactWalletConnect() {
+        console.log('📦 loadReactWalletConnect: Starting to load React library...');
         return new Promise((resolve, reject) => {
             if (window.ReactWalletConnect) {
+                console.log('✅ ReactWalletConnect already loaded');
                 resolve();
                 return;
             }
@@ -70,14 +73,15 @@
             const script = document.createElement('script');
             script.src = './js/libs/ReactWalletConnect.js';
             script.onload = () => {
-                console.log('ReactWalletConnect library loaded');
+                console.log('✅ ReactWalletConnect library loaded successfully');
                 resolve();
             };
             script.onerror = () => {
-                console.error('Failed to load ReactWalletConnect library');
+                console.error('❌ Failed to load ReactWalletConnect library');
                 reject(new Error('Failed to load ReactWalletConnect library'));
             };
             document.head.appendChild(script);
+            console.log('📤 Script tag added to head');
         });
     }
 
