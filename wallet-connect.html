@@ -73,82 +73,73 @@
     <!-- React and dependencies -->
     <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/wagmi@2.16.9/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/viem@2.37.4/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/@tanstack/react-query@5.87.1/dist/index.umd.js"></script>
 
     <script>
         const { useState, useEffect } = React;
-        const { PrivyProvider, usePrivy } = window.PrivyReactAuth;
-        const { createConfig, http, WagmiProvider } = window.Wagmi;
-        const { mainnet, sepolia } = window.Viem;
-
-        // Create wagmi config
-        const config = createConfig({
-            chains: [mainnet, sepolia],
-            transports: {
-                [mainnet.id]: http(),
-                [sepolia.id]: http(),
-            },
-        });
 
         function WalletConnectButton() {
-            const { ready, authenticated, user, login, logout } = usePrivy();
             const [walletAddress, setWalletAddress] = useState(null);
             const [isConnecting, setIsConnecting] = useState(false);
             const [error, setError] = useState(null);
-
-            useEffect(() => {
-                if (authenticated && user && user.wallet) {
-                    setWalletAddress(user.wallet.address);
-                    // Send wallet address back to parent window
-                    if (window.opener) {
-                        window.opener.postMessage({
-                            type: 'WALLET_CONNECTED',
-                            address: user.wallet.address,
-                            user: user
-                        }, '*');
-                    }
-                }
-            }, [authenticated, user]);
 
             const handleConnect = async () => {
                 setIsConnecting(true);
                 setError(null);
                 
                 try {
-                    // Use Privy's loginWithCrossAppAccount method
-                    await login();
+                    // Use the original Privy cross-app connect method
+                    const requesterOrigin = window.location.origin;
+                    const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                        `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                        `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                        `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
+
+                    // Open in same window for simplicity
+                    window.location.href = privyUrl;
                 } catch (error) {
-                    console.error('Login error:', error);
+                    console.error('Connection error:', error);
                     setError('Failed to connect wallet');
                     setIsConnecting(false);
                 }
             };
 
-            const handleDisconnect = async () => {
-                try {
-                    await logout();
-                    setWalletAddress(null);
-                    // Send disconnect message to parent
-                    if (window.opener) {
-                        window.opener.postMessage({
-                            type: 'WALLET_DISCONNECTED'
-                        }, '*');
-                    }
-                } catch (error) {
-                    console.error('Logout error:', error);
+            const handleDisconnect = () => {
+                setWalletAddress(null);
+                // Send disconnect message to parent
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'WALLET_DISCONNECTED'
+                    }, '*');
                 }
             };
 
-            if (!ready) {
-                return <div>Loading...</div>;
-            }
+            // Check for wallet data in URL parameters (for redirect method)
+            useEffect(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const wallet = urlParams.get('wallet');
+                const address = urlParams.get('address');
+                const account = urlParams.get('account');
+                
+                if (wallet || address || account) {
+                    const walletAddr = wallet || address || account;
+                    setWalletAddress(walletAddr);
+                    
+                    // Send wallet address back to parent window
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'WALLET_CONNECTED',
+                            address: walletAddr
+                        }, '*');
+                    }
+                    
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }, []);
 
             return (
                 <div>
-                    {authenticated && walletAddress ? (
+                    {walletAddress ? (
                         <div>
                             <div className="wallet-info success">
                                 <strong>Connected!</strong><br/>
@@ -175,22 +166,7 @@
         }
 
         function App() {
-            return (
-                React.createElement(WagmiProvider, { config },
-                    React.createElement(PrivyProvider, { 
-                        appId: "cm04asygd041fmry9zmcyn5o5",
-                        config: {
-                            loginMethods: ['wallet', 'email', 'sms'],
-                            appearance: {
-                                theme: 'light',
-                                accentColor: '#676FFF',
-                            },
-                        }
-                    },
-                        React.createElement(WalletConnectButton)
-                    )
-                )
-            );
+            return React.createElement(WalletConnectButton);
         }
 
         // Render the app
