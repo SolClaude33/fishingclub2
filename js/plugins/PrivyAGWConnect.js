@@ -71,17 +71,21 @@
             // Get the current origin
             const requesterOrigin = window.location.origin;
             
-            // Open our custom wallet connect page
-            const walletConnectUrl = `${requesterOrigin}/wallet-connect.html`;
-            console.log('Opening wallet connect page:', walletConnectUrl);
+            // Create the Privy connection URL directly
+            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
+
+            console.log('Opening Privy connection:', privyUrl);
 
             // Try popup first, fallback to redirect if blocked
             let popup = null;
             try {
                 popup = window.open(
-                    walletConnectUrl,
-                    'wallet-connect',
-                    'width=500,height=600,scrollbars=yes,resizable=yes'
+                    privyUrl,
+                    'privy-connect',
+                    'width=500,height=700,scrollbars=yes,resizable=yes'
                 );
                 
                 if (!popup || popup.closed || typeof popup.closed == 'undefined') {
@@ -90,7 +94,7 @@
             } catch (e) {
                 console.log('Popup blocked, using redirect method instead');
                 // Fallback to redirect method
-                window.location.href = walletConnectUrl;
+                window.location.href = privyUrl;
                 return;
             }
 
@@ -98,14 +102,14 @@
             const messageHandler = (event) => {
                 console.log('Received message from popup:', event.origin, event.data);
                 
-                // Accept messages from our own origin (wallet-connect.html)
-                if (event.origin !== requesterOrigin) {
+                // Accept messages from Privy domains
+                if (event.origin !== 'https://privy.abs.xyz' && event.origin !== 'https://dashboard.privy.io') {
                     return;
                 }
 
-                if (event.data.type === 'WALLET_CONNECTED') {
+                if (event.data.type === 'PRIVY_CONNECT_SUCCESS' || event.data.type === 'CONNECT_SUCCESS' || event.data.type === 'WALLET_CONNECTED') {
                     // Connection successful
-                    currentAccount = event.data.address;
+                    currentAccount = event.data.account || event.data.walletAddress || event.data.address;
                     isConnected = true;
 
                     // Update button state
