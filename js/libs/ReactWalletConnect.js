@@ -61,7 +61,6 @@ class ReactWalletConnect {
                     document.head.appendChild(fallbackScript);
                 };
                 document.head.appendChild(reactDOMScript);
-                }, 100); // Wait 100ms for React to be available
             };
             reactScript.onerror = () => {
                 console.error('❌ React failed to load from unpkg, trying jsdelivr...');
