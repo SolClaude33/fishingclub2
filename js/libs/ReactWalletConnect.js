@@ -26,7 +26,10 @@ class ReactWalletConnect {
             reactScript.onload = () => {
                 console.log('✅ React loaded:', typeof window.React);
                 console.log('🔍 window.React:', window.React);
-                // Load React DOM
+                // Wait a bit for React to be available
+                setTimeout(() => {
+                    console.log('🔍 React after timeout:', typeof window.React);
+                    // Load React DOM
                 const reactDOMScript = document.createElement('script');
                 reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
                 reactDOMScript.crossOrigin = 'anonymous';
@@ -51,6 +54,7 @@ class ReactWalletConnect {
                     document.head.appendChild(fallbackScript);
                 };
                 document.head.appendChild(reactDOMScript);
+                }, 100); // Wait 100ms for React to be available
             };
             reactScript.onerror = () => {
                 console.error('❌ React failed to load from unpkg, trying jsdelivr...');
@@ -60,17 +64,21 @@ class ReactWalletConnect {
                 fallbackScript.crossOrigin = 'anonymous';
                 fallbackScript.onload = () => {
                     console.log('✅ React loaded from fallback:', typeof window.React);
-                    // Load React DOM
-                    const reactDOMScript = document.createElement('script');
-                    reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
-                    reactDOMScript.crossOrigin = 'anonymous';
-                    reactDOMScript.onload = () => {
-                        console.log('✅ ReactDOM loaded:', typeof window.ReactDOM);
-                        this.isReactLoaded = true;
-                        resolve();
-                    };
-                    reactDOMScript.onerror = reject;
-                    document.head.appendChild(reactDOMScript);
+                    // Wait a bit for React to be available
+                    setTimeout(() => {
+                        console.log('🔍 React fallback after timeout:', typeof window.React);
+                        // Load React DOM
+                        const reactDOMScript = document.createElement('script');
+                        reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
+                        reactDOMScript.crossOrigin = 'anonymous';
+                        reactDOMScript.onload = () => {
+                            console.log('✅ ReactDOM loaded:', typeof window.ReactDOM);
+                            this.isReactLoaded = true;
+                            resolve();
+                        };
+                        reactDOMScript.onerror = reject;
+                        document.head.appendChild(reactDOMScript);
+                    }, 100);
                 };
                 fallbackScript.onerror = reject;
                 document.head.appendChild(fallbackScript);
@@ -89,8 +97,12 @@ class ReactWalletConnect {
             privyScript.onload = () => {
                 console.log('✅ Privy loaded:', typeof window.PrivyReactAuth);
                 console.log('🔍 window.PrivyReactAuth:', window.PrivyReactAuth);
-                this.isPrivyLoaded = true;
-                resolve();
+                // Wait a bit for Privy to be available
+                setTimeout(() => {
+                    console.log('🔍 Privy after timeout:', typeof window.PrivyReactAuth);
+                    this.isPrivyLoaded = true;
+                    resolve();
+                }, 100);
             };
             privyScript.onerror = reject;
             document.head.appendChild(privyScript);
