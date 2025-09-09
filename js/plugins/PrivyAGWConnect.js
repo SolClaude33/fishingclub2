@@ -48,7 +48,7 @@
     const appId = parameters['appId'] || 'cm04asygd041fmry9zmcyn5o5';
     const buttonText = parameters['buttonText'] || 'Connect AGW';
     const buttonPosition = parameters['buttonPosition'] || 'top-right';
-    const useReact = parameters['useReact'] === 'true';
+    const useReact = parameters['useReact'] === 'true' || parameters['useReact'] === true;
 
     // Global state
     let isConnected = false;
@@ -59,6 +59,11 @@
     console.log('🚀 PrivyAGWConnect: React-based AGW connection initialized');
     console.log('🔧 Plugin parameters:', { appId, buttonText, buttonPosition, useReact });
     console.log('🔥 FORZANDO ACTUALIZACION - VERSION 2.0.1');
+    console.log('🔍 Raw useReact parameter:', parameters['useReact'], 'Type:', typeof parameters['useReact']);
+    
+    // Force useReact to true for debugging
+    const forceUseReact = true;
+    console.log('🚀 FORCING useReact to true for debugging');
 
     // Load React Wallet Connect library
     function loadReactWalletConnect() {
@@ -279,7 +284,7 @@
         console.log('🎬 SceneManager.run called with:', sceneClass.name);
         _SceneManager_run.call(this, sceneClass);
         
-        if (useReact) {
+        if (forceUseReact) {
             console.log('⏰ Setting timeout for React wallet initialization...');
             // Initialize React wallet connection
             setTimeout(async () => {
