@@ -287,8 +287,8 @@ class ReactWalletConnect {
             // Create a simple button that opens Privy directly
             const handleConnect = () => {
                 console.log('🔧 Fallback connect clicked with App ID:', appId);
-                // Open Privy directly with the correct App ID
-                const privyUrl = `https://auth.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`;
+                // Open Privy directly with the correct App ID using the cross-app connect URL
+                const privyUrl = `https://privy.abs.xyz/cross-app/connect?provider_app_id=${appId}&requester_origin=${encodeURIComponent(window.location.origin)}&redirect_uri=${encodeURIComponent(window.location.origin)}`;
                 window.open(privyUrl, '_blank', 'width=500,height=600');
             };
             
