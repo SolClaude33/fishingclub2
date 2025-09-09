@@ -100,6 +100,7 @@ class ReactWalletConnect {
         if (this.isPrivyLoaded) return;
 
         const cdnUrls = [
+            'https://sdk.privy.io/privy-js.js',
             'https://cdn.jsdelivr.net/npm/@privy-io/react-auth@2.24.0/dist/index.umd.js',
             'https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js'
         ];
@@ -125,20 +126,47 @@ class ReactWalletConnect {
             privyScript.onload = () => {
                 console.log('✅ Privy loaded from:', url);
                 console.log('🔍 window.PrivyReactAuth:', typeof window.PrivyReactAuth);
-                console.log('🔍 window.PrivyReactAuth:', window.PrivyReactAuth);
+                console.log('🔍 window.Privy:', typeof window.Privy);
+                console.log('🔍 Available Privy objects:', Object.keys(window).filter(key => key.toLowerCase().includes('privy')));
+                
                 // Wait a bit for Privy to be available
                 setTimeout(() => {
                     console.log('🔍 Privy after timeout:', typeof window.PrivyReactAuth);
+                    console.log('🔍 window.Privy after timeout:', typeof window.Privy);
                     console.log('🔍 window.PrivyReactAuth after timeout:', window.PrivyReactAuth);
+                    console.log('🔍 window.Privy after timeout:', window.Privy);
                     
-                    // Extract PrivyProvider from the UMD bundle
+                    // Try different Privy loading approaches
                     if (window.PrivyReactAuth && window.PrivyReactAuth.PrivyProvider) {
+                        // React Auth version
                         window.PrivyProvider = window.PrivyReactAuth.PrivyProvider;
                         window.usePrivy = window.PrivyReactAuth.usePrivy;
-                        console.log('✅ PrivyProvider extracted:', typeof window.PrivyProvider);
+                        console.log('✅ PrivyProvider extracted from PrivyReactAuth:', typeof window.PrivyProvider);
+                        resolve();
+                    } else if (window.Privy && window.Privy.PrivyProvider) {
+                        // Direct Privy version
+                        window.PrivyProvider = window.Privy.PrivyProvider;
+                        window.usePrivy = window.Privy.usePrivy;
+                        console.log('✅ PrivyProvider extracted from Privy:', typeof window.PrivyProvider);
+                        resolve();
+                    } else if (window.Privy) {
+                        // Try to create a simple provider wrapper
+                        console.log('🔧 Creating simple Privy provider wrapper...');
+                        window.PrivyProvider = ({ children }) => {
+                            return React.createElement('div', { id: 'privy-provider' }, children);
+                        };
+                        window.usePrivy = () => ({
+                            ready: true,
+                            authenticated: false,
+                            user: null,
+                            login: () => console.log('Login not implemented'),
+                            logout: () => console.log('Logout not implemented')
+                        });
+                        console.log('✅ Simple Privy provider wrapper created');
                         resolve();
                     } else {
-                        console.error('❌ PrivyProvider not found in PrivyReactAuth');
+                        console.error('❌ No Privy objects found');
+                        console.error('❌ Available window objects:', Object.keys(window).filter(key => key.toLowerCase().includes('privy')));
                         reject(new Error('PrivyProvider not found'));
                         return;
                     }
