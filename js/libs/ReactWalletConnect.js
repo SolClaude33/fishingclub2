@@ -24,12 +24,19 @@ class ReactWalletConnect {
             reactScript.src = 'https://unpkg.com/react@18.3.1/umd/react.production.min.js';
             reactScript.crossOrigin = 'anonymous';
             reactScript.onload = () => {
-                console.log('✅ React loaded:', typeof window.React);
-                console.log('🔍 window.React:', window.React);
-                // Wait a bit for React to be available
-                setTimeout(() => {
-                    console.log('🔍 React after timeout:', typeof window.React);
-                    // Load React DOM
+                console.log('✅ React script loaded');
+                console.log('🔍 window.React:', typeof window.React, window.React);
+                console.log('🔍 Available globals with "react":', Object.keys(window).filter(k => k.toLowerCase().includes('react')));
+                
+                // Check if React is available in global scope
+                if (typeof window.React === 'undefined') {
+                    console.error('❌ React not available in window after script load');
+                    console.log('🔍 All window properties:', Object.keys(window).slice(0, 20));
+                    reject(new Error('React not available in window'));
+                    return;
+                }
+                
+                // Load React DOM
                 const reactDOMScript = document.createElement('script');
                 reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
                 reactDOMScript.crossOrigin = 'anonymous';
@@ -64,9 +71,11 @@ class ReactWalletConnect {
                 fallbackScript.crossOrigin = 'anonymous';
                 fallbackScript.onload = () => {
                     console.log('✅ React loaded from fallback:', typeof window.React);
+                    console.log('🔍 window.React from fallback:', window.React);
                     // Wait a bit for React to be available
                     setTimeout(() => {
                         console.log('🔍 React fallback after timeout:', typeof window.React);
+                        console.log('🔍 window.React fallback after timeout:', window.React);
                         // Load React DOM
                         const reactDOMScript = document.createElement('script');
                         reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
@@ -100,6 +109,7 @@ class ReactWalletConnect {
                 // Wait a bit for Privy to be available
                 setTimeout(() => {
                     console.log('🔍 Privy after timeout:', typeof window.PrivyReactAuth);
+                    console.log('🔍 window.PrivyReactAuth after timeout:', window.PrivyReactAuth);
                     this.isPrivyLoaded = true;
                     resolve();
                 }, 100);
