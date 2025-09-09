@@ -342,13 +342,13 @@ class ReactWalletConnect {
                 setError(null);
                 
                 try {
-                    // Force Privy cross-app connect instead of default login
-                    const requesterOrigin = window.location.origin;
                     // Use standard Privy auth URL (works without DNS setup)
+                    const requesterOrigin = window.location.origin;
                     const privyUrl = `https://auth.privy.io/oauth/authorize?` +
                         `client_id=cmfa4s0v800s8180b9c8eiatl&` +
                         `redirect_uri=${encodeURIComponent(requesterOrigin)}&` +
-                        `response_type=code&scope=openid`;
+                        `response_type=code&scope=openid&` +
+                        `timestamp=${Date.now()}`; // Force cache bust
 
                     console.log('🔧 Opening Privy URL:', privyUrl);
                     console.log('🔧 Requester origin:', requesterOrigin);
