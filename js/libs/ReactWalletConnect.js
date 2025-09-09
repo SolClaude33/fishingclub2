@@ -342,32 +342,40 @@ class ReactWalletConnect {
                 setError(null);
                 
                 try {
-                    // Use standard Privy auth URL (works without DNS setup)
-                    const requesterOrigin = window.location.origin;
-                    const privyUrl = `https://auth.privy.io/oauth/authorize?` +
-                        `client_id=cmfa4s0v800s8180b9c8eiatl&` +
-                        `redirect_uri=${encodeURIComponent(requesterOrigin)}&` +
-                        `response_type=code&scope=openid&` +
-                        `timestamp=${Date.now()}`; // Force cache bust
+                    console.log('🔧 Starting AGW cross-app login...');
+                    
+                    // Use Privy's cross-app login method for AGW
+                    if (window.PrivyReactAuth && window.PrivyReactAuth.useCrossAppAccounts) {
+                        console.log('🔧 Using Privy React Auth cross-app login');
+                        // This will be handled by the Privy SDK
+                        const { loginWithCrossAppAccount } = window.PrivyReactAuth.useCrossAppAccounts();
+                        await loginWithCrossAppAccount({ appId: 'cm04asygd041fmry9zmcyn5o5' });
+                    } else {
+                        console.log('🔧 Fallback: Using manual cross-app URL');
+                        // Fallback to manual cross-app URL
+                        const requesterOrigin = window.location.origin;
+                        const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                            `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                            `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                            `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
 
-                    console.log('🔧 Opening Privy URL:', privyUrl);
-                    console.log('🔧 Requester origin:', requesterOrigin);
+                        console.log('🔧 Opening AGW cross-app URL:', privyUrl);
 
-                    // Open in popup
-                    const popup = window.open(
-                        privyUrl,
-                        'privy-connect',
-                        'width=500,height=700,scrollbars=yes,resizable=yes'
-                    );
+                        // Open in popup
+                        const popup = window.open(
+                            privyUrl,
+                            'privy-connect',
+                            'width=500,height=700,scrollbars=yes,resizable=yes'
+                        );
 
-                    if (!popup) {
-                        console.log('🔧 Popup blocked, redirecting instead');
-                        // Fallback to redirect
-                        window.location.href = privyUrl;
-                        return;
+                        if (!popup) {
+                            console.log('🔧 Popup blocked, redirecting instead');
+                            window.location.href = privyUrl;
+                            return;
+                        }
+
+                        console.log('✅ AGW cross-app popup opened successfully');
                     }
-
-                    console.log('✅ Popup opened successfully');
 
                     // Listen for messages from Privy
                     const messageHandler = (event) => {
@@ -457,7 +465,7 @@ class ReactWalletConnect {
 
         const App = () => {
             return React.createElement(AbstractPrivyProvider, { 
-                appId: "cmfa4s0v800s8180b9c8eiatl" // Your actual Privy app ID
+                appId: "cmfa4s0v800s8180b9c8eiatl" // Your actual Privy app ID (requester)
                 // AbstractPrivyProvider handles the Privy configuration internally
             }, React.createElement(WalletConnectButton));
         };
