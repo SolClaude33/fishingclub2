@@ -337,6 +337,10 @@ class ReactWalletConnect {
         const { useState, useEffect } = React;
         const AbstractPrivyProvider = window.PrivyProvider; // This will be AbstractPrivyProvider if loaded
         const usePrivy = window.usePrivy;
+        
+        // Fix containerId if it's undefined
+        const actualContainerId = containerId || 'react-wallet-connect';
+        console.log('🔧 Fixed containerId:', actualContainerId);
 
         const WalletConnectButton = () => {
             console.log('🎨 WalletConnectButton component rendering...');
@@ -364,7 +368,7 @@ class ReactWalletConnect {
                     // Force Privy cross-app connect instead of default login
                     const requesterOrigin = window.location.origin;
                     const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
-                        `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                        `provider_app_id=cmfa4s0v800s8180b9c8eiatl&` +
                         `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
                         `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
 
@@ -475,8 +479,8 @@ class ReactWalletConnect {
         };
 
         // Render the component
-        console.log('🎨 Looking for container:', containerId);
-        const container = document.getElementById(containerId);
+        console.log('🎨 Looking for container:', actualContainerId);
+        const container = document.getElementById(actualContainerId);
         if (container) {
             console.log('✅ Container found, creating React root...');
             const root = ReactDOM.createRoot(container);
@@ -484,7 +488,7 @@ class ReactWalletConnect {
             root.render(React.createElement(App));
             console.log('✅ React component rendered successfully!');
         } else {
-            console.error('❌ Container not found:', containerId);
+            console.error('❌ Container not found:', actualContainerId);
             console.error('❌ Available containers:', Array.from(document.querySelectorAll('[id*="react"]')).map(el => el.id));
             // Try to find the container by partial match
             const fallbackContainer = document.querySelector('[id*="react-wallet"]');
