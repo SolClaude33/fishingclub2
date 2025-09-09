@@ -62,9 +62,12 @@ class ReactWalletConnect {
         const { PrivyProvider, usePrivy } = window.PrivyReactAuth;
 
         const WalletConnectButton = () => {
+            console.log('🎨 WalletConnectButton component rendering...');
             const { ready, authenticated, user, login, logout } = usePrivy();
             const [isConnecting, setIsConnecting] = useState(false);
             const [error, setError] = useState(null);
+            
+            console.log('🎨 WalletConnectButton state:', { ready, authenticated, user, isConnecting, error });
 
             useEffect(() => {
                 if (authenticated && user && user.wallet) {
@@ -204,10 +207,16 @@ class ReactWalletConnect {
         };
 
         // Render the component
+        console.log('🎨 Looking for container:', containerId);
         const container = document.getElementById(containerId);
         if (container) {
+            console.log('✅ Container found, creating React root...');
             const root = ReactDOM.createRoot(container);
+            console.log('🎨 Rendering React component...');
             root.render(React.createElement(App));
+            console.log('✅ React component rendered successfully!');
+        } else {
+            console.error('❌ Container not found:', containerId);
         }
     }
 
@@ -223,8 +232,9 @@ class ReactWalletConnect {
             // Wait a bit for everything to be ready
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // Create the component
+            // Create and render the component
             this.createWalletConnectComponent(containerId);
+            console.log('🎨 Component created, attempting to render...');
             
             return true;
         } catch (error) {
