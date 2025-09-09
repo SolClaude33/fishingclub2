@@ -8,12 +8,52 @@
     console.log('PrivyAGWConnect: Simple popup method for AGW connection');
 
     // Generate a unique requester public key for Privy cross-app connect
-    function generateRequesterKey() {
-        // Generate a random key for this session
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        // Convert to base64 properly
-        return btoa(String.fromCharCode.apply(null, Array.from(array)));
+    async function generateRequesterKey() {
+        try {
+            // Generate a proper ECDH P-256 key pair for Privy
+            const keyPair = await crypto.subtle.generateKey(
+                {
+                    name: 'ECDH',
+                    namedCurve: 'P-256'
+                },
+                true,
+                ['deriveKey', 'deriveBits']
+            );
+
+            // Export the public key in raw format (uncompressed)
+            const publicKeyBuffer = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+            
+            // Convert to hex string (uncompressed public key format)
+            const publicKeyHex = Array.from(new Uint8Array(publicKeyBuffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            
+            console.log('Generated ECDH P-256 public key for Privy:', publicKeyHex);
+            console.log('Key length:', publicKeyHex.length);
+            
+            return publicKeyHex;
+        } catch (error) {
+            console.error('Error generating ECDH key:', error);
+            
+            // Fallback: Generate a simple random key in hex format
+            try {
+                const array = new Uint8Array(32);
+                crypto.getRandomValues(array);
+                const hex = Array.from(array)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                
+                console.log('Using fallback random key:', hex);
+                return hex;
+            } catch (fallbackError) {
+                console.error('Error generating fallback key:', fallbackError);
+                
+                // Final fallback: Use a fixed test key
+                const fallbackKey = 'dGVzdC1rZXktZm9yLXByaXZ5LWNvbm5lY3Rpb24tdGVzdA==';
+                console.log('Using final fallback key:', fallbackKey);
+                return fallbackKey;
+            }
+        }
     }
 
 
@@ -26,14 +66,13 @@
             button.disabled = true;
 
             // Generate a unique requester public key for this session
-            const requesterPublicKey = generateRequesterKey();
+            const requesterPublicKey = await generateRequesterKey();
             
             // Get the current origin
             const requesterOrigin = window.location.origin;
             
-            // Create the Privy connection URL - using the correct format
+            // Create the Privy connection URL - try without requester_public_key first
             const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
-                `requester_public_key=${encodeURIComponent(requesterPublicKey)}&` +
                 `connect=true&` +
                 `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
                 `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
