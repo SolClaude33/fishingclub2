@@ -1,4 +1,8 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "buildCommand": "echo 'Static web game - no build needed'",
+  "outputDirectory": ".",
+  "installCommand": "npm install",
+  "framework": null
 }
