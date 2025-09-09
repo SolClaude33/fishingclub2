@@ -181,7 +181,8 @@
             console.log('🔍 React available:', typeof window.React);
             console.log('🔍 ReactDOM available:', typeof window.ReactDOM);
             console.log('🔍 Privy available:', typeof window.PrivyReactAuth);
-            await reactWalletConnect.initialize(container.id, {
+            console.log('🔍 Container ID:', container.id);
+            await reactWalletConnect.initialize(container.id || 'react-wallet-connect', {
                 onConnect: (address, user) => {
                     console.log('✅ Wallet connected:', address);
                     currentAccount = address;

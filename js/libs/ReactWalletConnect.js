@@ -394,6 +394,17 @@ class ReactWalletConnect {
             console.log('✅ React component rendered successfully!');
         } else {
             console.error('❌ Container not found:', containerId);
+            console.error('❌ Available containers:', Array.from(document.querySelectorAll('[id*="react"]')).map(el => el.id));
+            // Try to find the container by partial match
+            const fallbackContainer = document.querySelector('[id*="react-wallet"]');
+            if (fallbackContainer) {
+                console.log('🔧 Found fallback container:', fallbackContainer.id);
+                const root = ReactDOM.createRoot(fallbackContainer);
+                root.render(React.createElement(App));
+                console.log('✅ React component rendered in fallback container');
+            } else {
+                console.error('❌ No suitable container found for React component');
+            }
         }
     }
 
