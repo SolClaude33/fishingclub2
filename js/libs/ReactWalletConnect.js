@@ -24,18 +24,55 @@ class ReactWalletConnect {
             reactScript.src = 'https://unpkg.com/react@18.3.1/umd/react.production.min.js';
             reactScript.crossOrigin = 'anonymous';
             reactScript.onload = () => {
+                console.log('✅ React loaded:', typeof window.React);
                 // Load React DOM
                 const reactDOMScript = document.createElement('script');
                 reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
                 reactDOMScript.crossOrigin = 'anonymous';
                 reactDOMScript.onload = () => {
+                    console.log('✅ ReactDOM loaded:', typeof window.ReactDOM);
                     this.isReactLoaded = true;
                     resolve();
                 };
-                reactDOMScript.onerror = reject;
+                reactDOMScript.onerror = () => {
+                    console.error('❌ ReactDOM failed to load from unpkg, trying jsdelivr...');
+                    // Fallback to jsdelivr
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = 'https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js';
+                    fallbackScript.crossOrigin = 'anonymous';
+                    fallbackScript.onload = () => {
+                        console.log('✅ ReactDOM loaded from fallback:', typeof window.ReactDOM);
+                        this.isReactLoaded = true;
+                        resolve();
+                    };
+                    fallbackScript.onerror = reject;
+                    document.head.appendChild(fallbackScript);
+                };
                 document.head.appendChild(reactDOMScript);
             };
-            reactScript.onerror = reject;
+            reactScript.onerror = () => {
+                console.error('❌ React failed to load from unpkg, trying jsdelivr...');
+                // Fallback to jsdelivr
+                const fallbackScript = document.createElement('script');
+                fallbackScript.src = 'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js';
+                fallbackScript.crossOrigin = 'anonymous';
+                fallbackScript.onload = () => {
+                    console.log('✅ React loaded from fallback:', typeof window.React);
+                    // Load React DOM
+                    const reactDOMScript = document.createElement('script');
+                    reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
+                    reactDOMScript.crossOrigin = 'anonymous';
+                    reactDOMScript.onload = () => {
+                        console.log('✅ ReactDOM loaded:', typeof window.ReactDOM);
+                        this.isReactLoaded = true;
+                        resolve();
+                    };
+                    reactDOMScript.onerror = reject;
+                    document.head.appendChild(reactDOMScript);
+                };
+                fallbackScript.onerror = reject;
+                document.head.appendChild(fallbackScript);
+            };
             document.head.appendChild(reactScript);
         });
     }
@@ -48,6 +85,7 @@ class ReactWalletConnect {
             const privyScript = document.createElement('script');
             privyScript.src = 'https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js';
             privyScript.onload = () => {
+                console.log('✅ Privy loaded:', typeof window.PrivyReactAuth);
                 this.isPrivyLoaded = true;
                 resolve();
             };
