@@ -158,6 +158,8 @@
         document.head.appendChild(style);
 
         document.body.appendChild(walletContainer);
+        console.log('📦 Container appended to DOM:', walletContainer);
+        console.log('📦 Container in DOM check:', document.getElementById('react-wallet-connect'));
         return walletContainer;
     }
 
@@ -176,6 +178,9 @@
             console.log('📦 Container created:', container.id);
             
             console.log('🎯 Initializing React wallet with container...');
+            console.log('🔍 React available:', typeof window.React);
+            console.log('🔍 ReactDOM available:', typeof window.ReactDOM);
+            console.log('🔍 Privy available:', typeof window.PrivyReactAuth);
             await reactWalletConnect.initialize(container.id, {
                 onConnect: (address, user) => {
                     console.log('✅ Wallet connected:', address);
