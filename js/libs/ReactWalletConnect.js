@@ -25,12 +25,14 @@ class ReactWalletConnect {
             reactScript.crossOrigin = 'anonymous';
             reactScript.onload = () => {
                 console.log('✅ React loaded:', typeof window.React);
+                console.log('🔍 window.React:', window.React);
                 // Load React DOM
                 const reactDOMScript = document.createElement('script');
                 reactDOMScript.src = 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js';
                 reactDOMScript.crossOrigin = 'anonymous';
                 reactDOMScript.onload = () => {
                     console.log('✅ ReactDOM loaded:', typeof window.ReactDOM);
+                    console.log('🔍 window.ReactDOM:', window.ReactDOM);
                     this.isReactLoaded = true;
                     resolve();
                 };
@@ -86,6 +88,7 @@ class ReactWalletConnect {
             privyScript.src = 'https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js';
             privyScript.onload = () => {
                 console.log('✅ Privy loaded:', typeof window.PrivyReactAuth);
+                console.log('🔍 window.PrivyReactAuth:', window.PrivyReactAuth);
                 this.isPrivyLoaded = true;
                 resolve();
             };
