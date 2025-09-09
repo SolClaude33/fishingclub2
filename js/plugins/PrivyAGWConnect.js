@@ -71,25 +71,31 @@
             // Get the current origin
             const requesterOrigin = window.location.origin;
             
-            // Create the Privy connection URL - try without requester_public_key first
-            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
-                `connect=true&` +
-                `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
-                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
-                `smart_wallet_mode=false&` +
-                `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
+            // Create the Privy connection URL - try dashboard.privy.io instead
+            const privyUrl = `https://dashboard.privy.io/connect?` +
+                `app_id=cm04asygd041fmry9zmcyn5o5&` +
+                `redirect_uri=${encodeURIComponent(requesterOrigin)}&` +
+                `provider=abstract`;
 
             console.log('Opening Privy connection:', privyUrl);
 
-            // Open Privy connection in a popup window
-            const popup = window.open(
-                privyUrl,
-                'privy-connect',
-                'width=500,height=700,scrollbars=yes,resizable=yes'
-            );
-
-            if (!popup) {
-                throw new Error('Popup blocked. Please allow popups for this site.');
+            // Try popup first, fallback to redirect if blocked
+            let popup = null;
+            try {
+                popup = window.open(
+                    privyUrl,
+                    'privy-connect',
+                    'width=500,height=700,scrollbars=yes,resizable=yes'
+                );
+                
+                if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                    throw new Error('Popup blocked');
+                }
+            } catch (e) {
+                console.log('Popup blocked, using redirect method instead');
+                // Fallback to redirect method
+                window.location.href = privyUrl;
+                return;
             }
 
             // Listen for messages from the popup
@@ -458,6 +464,39 @@
             }
         }, 500);
     }
+
+    // Check for wallet data when page loads (for redirect method)
+    function checkForWalletData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const walletAddress = urlParams.get('wallet') || urlParams.get('address') || urlParams.get('account');
+        
+        if (walletAddress) {
+            console.log('Wallet address found in URL:', walletAddress);
+            currentAccount = walletAddress;
+            isConnected = true;
+            
+            // Update button if it exists
+            const button = document.getElementById('wallet-connect-btn');
+            if (button) {
+                setButtonState(button, true, currentAccount);
+            }
+            
+            // Show success message
+            showNotification('Abstract Global Wallet connected successfully!', 'success');
+            
+            // Set current wallet address for save system
+            if (window.setCurrentWalletAddress) {
+                window.setCurrentWalletAddress(currentAccount);
+            }
+            
+            // Clean up URL
+            const newUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    }
+    
+    // Check for wallet data on page load
+    checkForWalletData();
 
     console.log('PrivyAGWConnect plugin loaded - Simple popup method for AGW');
 })();
