@@ -1,20 +1,23 @@
 {
-    "name": "rmmz-game",
-    "main": "index.html",
-    "chromium-args": "--force-color-profile=srgb",
-    "window": {
-        "title": "Penguin Fishing Club",
-        "width": 1600,
-        "height": 900,
-        "position": "center",
-        "icon": "icon/icon.png"
-    },
-    "dependencies": {
-        "@abstract-foundation/agw-client": "^1.9.0",
-        "@abstract-foundation/agw-react": "^1.9.0",
-        "@rainbow-me/rainbowkit": "^2.2.8",
-        "@tanstack/react-query": "^5.87.1",
-        "viem": "^2.37.4",
-        "wagmi": "^2.16.9"
-    }
+  "name": "penguin-fishing-club",
+  "version": "1.0.0",
+  "description": "A Web3 fishing game built with RPG Maker MZ",
+  "main": "game.html",
+  "scripts": {
+    "build": "echo 'Static web game - no build needed'",
+    "start": "echo 'Open game.html in browser'"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@privy-io/react-auth": "^2.24.0",
+    "@abstract-foundation/agw-react": "^1.9.0",
+    "@abstract-foundation/agw-client": "^1.9.0",
+    "wagmi": "^2.16.9",
+    "viem": "^2.37.4",
+    "@tanstack/react-query": "^5.87.1"
+  },
+  "keywords": ["web3", "fishing", "game", "blockchain"],
+  "author": "SolClaude33",
+  "license": "MIT"
 }

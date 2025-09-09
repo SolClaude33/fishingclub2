@@ -71,20 +71,17 @@
             // Get the current origin
             const requesterOrigin = window.location.origin;
             
-            // Create the Privy connection URL - try the standard auth URL
-            const privyUrl = `https://auth.privy.io/connect?` +
-                `app_id=cm04asygd041fmry9zmcyn5o5&` +
-                `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
-
-            console.log('Opening Privy connection:', privyUrl);
+            // Open our custom wallet connect page
+            const walletConnectUrl = `${requesterOrigin}/wallet-connect.html`;
+            console.log('Opening wallet connect page:', walletConnectUrl);
 
             // Try popup first, fallback to redirect if blocked
             let popup = null;
             try {
                 popup = window.open(
-                    privyUrl,
-                    'privy-connect',
-                    'width=500,height=700,scrollbars=yes,resizable=yes'
+                    walletConnectUrl,
+                    'wallet-connect',
+                    'width=500,height=600,scrollbars=yes,resizable=yes'
                 );
                 
                 if (!popup || popup.closed || typeof popup.closed == 'undefined') {
@@ -93,7 +90,7 @@
             } catch (e) {
                 console.log('Popup blocked, using redirect method instead');
                 // Fallback to redirect method
-                window.location.href = privyUrl;
+                window.location.href = walletConnectUrl;
                 return;
             }
 
@@ -101,14 +98,14 @@
             const messageHandler = (event) => {
                 console.log('Received message from popup:', event.origin, event.data);
                 
-                // Accept messages from both privy.abs.xyz and dashboard.privy.io
-                if (event.origin !== 'https://privy.abs.xyz' && event.origin !== 'https://dashboard.privy.io') {
+                // Accept messages from our own origin (wallet-connect.html)
+                if (event.origin !== requesterOrigin) {
                     return;
                 }
 
-                if (event.data.type === 'PRIVY_CONNECT_SUCCESS' || event.data.type === 'CONNECT_SUCCESS' || event.data.type === 'WALLET_CONNECTED') {
+                if (event.data.type === 'WALLET_CONNECTED') {
                     // Connection successful
-                    currentAccount = event.data.account || event.data.walletAddress || event.data.address;
+                    currentAccount = event.data.address;
                     isConnected = true;
 
                     // Update button state

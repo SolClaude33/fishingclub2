@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Connect - Penguin Fishing Club</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .wallet-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .wallet-container h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .wallet-button {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 10px;
+        }
+        .wallet-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .wallet-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .wallet-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="wallet-container">
+        <h1>🐧 Penguin Fishing Club</h1>
+        <div id="wallet-connect-root"></div>
+    </div>
+
+    <!-- React and dependencies -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/@abstract-foundation/agw-react@1.9.0/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/wagmi@2.16.9/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/viem@2.37.4/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/@tanstack/react-query@5.87.1/dist/index.umd.js"></script>
+
+    <script>
+        const { useState, useEffect } = React;
+        const { PrivyProvider, usePrivy, useWallets } = window.PrivyReactAuth;
+        const { AbstractPrivyProvider } = window.AbstractAGWReact;
+
+        function WalletConnectButton() {
+            const { ready, authenticated, user, login, logout } = usePrivy();
+            const { wallets } = useWallets();
+            const [walletAddress, setWalletAddress] = useState(null);
+
+            useEffect(() => {
+                if (authenticated && user && user.wallet) {
+                    setWalletAddress(user.wallet.address);
+                    // Send wallet address back to parent window
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'WALLET_CONNECTED',
+                            address: user.wallet.address,
+                            user: user
+                        }, '*');
+                    }
+                }
+            }, [authenticated, user]);
+
+            const handleConnect = async () => {
+                try {
+                    await login();
+                } catch (error) {
+                    console.error('Login error:', error);
+                }
+            };
+
+            const handleDisconnect = async () => {
+                try {
+                    await logout();
+                    setWalletAddress(null);
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            };
+
+            if (!ready) {
+                return <div>Loading...</div>;
+            }
+
+            return (
+                <div>
+                    {authenticated && walletAddress ? (
+                        <div>
+                            <div className="wallet-info success">
+                                <strong>Connected!</strong><br/>
+                                {walletAddress}
+                            </div>
+                            <button className="wallet-button" onClick={handleDisconnect}>
+                                Disconnect Wallet
+                            </button>
+                        </div>
+                    ) : (
+                        <button className="wallet-button" onClick={handleConnect}>
+                            Connect Abstract Global Wallet
+                        </button>
+                    )}
+                </div>
+            );
+        }
+
+        function App() {
+            return (
+                <AbstractPrivyProvider appId="cm04asygd041fmry9zmcyn5o5">
+                    <WalletConnectButton />
+                </AbstractPrivyProvider>
+            );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('wallet-connect-root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>
