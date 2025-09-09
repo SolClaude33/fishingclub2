@@ -107,13 +107,19 @@ class ReactWalletConnect {
 
         for (let i = 0; i < cdnUrls.length; i++) {
             try {
+                console.log(`🔄 Attempting to load Privy from CDN ${i + 1}:`, cdnUrls[i]);
                 await this.loadPrivyFromUrl(cdnUrls[i]);
                 this.isPrivyLoaded = true;
+                console.log(`✅ Successfully loaded Privy from CDN ${i + 1}`);
                 return;
             } catch (error) {
                 console.warn(`⚠️ Failed to load Privy from CDN ${i + 1}:`, cdnUrls[i], error);
                 if (i === cdnUrls.length - 1) {
-                    throw new Error('All Privy CDNs failed to load');
+                    console.error('❌ All Privy CDNs failed, creating fallback provider...');
+                    // Create a fallback provider instead of throwing an error
+                    this.createFallbackProvider();
+                    this.isPrivyLoaded = true;
+                    return;
                 }
             }
         }
@@ -167,6 +173,7 @@ class ReactWalletConnect {
                     } else {
                         console.error('❌ No Privy objects found');
                         console.error('❌ Available window objects:', Object.keys(window).filter(key => key.toLowerCase().includes('privy')));
+                        console.error('❌ All window objects:', Object.keys(window).slice(0, 20)); // Show first 20 for debugging
                         reject(new Error('PrivyProvider not found'));
                         return;
                     }
@@ -192,6 +199,31 @@ class ReactWalletConnect {
             };
             document.head.appendChild(privyScript);
         });
+    }
+
+    // Create fallback provider when Privy fails to load
+    createFallbackProvider() {
+        console.log('🔧 Creating fallback Privy provider...');
+        
+        // Create a simple fallback provider
+        window.PrivyProvider = ({ children }) => {
+            return React.createElement('div', { id: 'privy-provider-fallback' }, children);
+        };
+        
+        window.usePrivy = () => ({
+            ready: true,
+            authenticated: false,
+            user: null,
+            login: () => {
+                console.log('🔧 Fallback login called - showing message');
+                alert('Wallet connection is temporarily unavailable. Please try again later.');
+            },
+            logout: () => {
+                console.log('🔧 Fallback logout called');
+            }
+        });
+        
+        console.log('✅ Fallback Privy provider created successfully');
     }
 
     // Create wallet connect component
