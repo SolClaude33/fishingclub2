@@ -4,62 +4,20 @@
     // Global state
     let isConnected = false;
     let currentAccount = null;
-    let privyClient = null;
 
-    console.log('PrivyAGWConnect: Official Privy SDK with cross-app login for AGW');
+    console.log('PrivyAGWConnect: Simple popup method for AGW connection');
 
-    // Initialize Privy client
-    async function initializePrivy() {
-        try {
-            // Load Privy SDK dynamically
-            if (!window.Privy) {
-                console.log('Loading Privy SDK...');
-                await loadScript('https://sdk.privy.io/privy-js.js');
-                
-                // Wait for SDK to load
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-
-            if (!window.Privy || !window.Privy.PrivyClient) {
-                throw new Error('Privy SDK not loaded properly');
-            }
-
-            // Initialize Privy client
-            privyClient = new window.Privy.PrivyClient({
-                appId: 'cm04asygd041fmry9zmcyn5o5',
-                config: {
-                    appearance: {
-                        theme: 'light',
-                        accentColor: '#676FFF',
-                        logo: 'https://fishingclub2-5f4o.vercel.app/logo.png'
-                    },
-                    embeddedWallets: {
-                        createOnLogin: 'users-without-wallets',
-                        requireUserPasswordOnCreate: false
-                    }
-                }
-            });
-
-            console.log('✅ Privy client initialized');
-            return true;
-        } catch (error) {
-            console.error('❌ Failed to initialize Privy:', error);
-            return false;
-        }
+    // Generate a unique requester public key for Privy cross-app connect
+    function generateRequesterKey() {
+        // Generate a random key for this session
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        // Convert to base64 properly
+        return btoa(String.fromCharCode.apply(null, Array.from(array)));
     }
 
-    // Load external script
-    function loadScript(src) {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = src;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-        });
-    }
 
-    // Connect to Abstract Global Wallet via Privy cross-app login
+    // Connect to Abstract Global Wallet via Privy popup
     async function connectAGW() {
         const button = document.getElementById('wallet-connect-btn');
         
@@ -67,38 +25,49 @@
             button.textContent = 'Connecting...';
             button.disabled = true;
 
-            // Initialize Privy if not already done
-            if (!privyClient) {
-                const initialized = await initializePrivy();
-                if (!initialized) {
-                    throw new Error('Failed to initialize Privy SDK');
-                }
+            // Generate a unique requester public key for this session
+            const requesterPublicKey = generateRequesterKey();
+            
+            // Get the current origin
+            const requesterOrigin = window.location.origin;
+            
+            // Create the Privy connection URL
+            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                `requester_public_key=${encodeURIComponent(requesterPublicKey)}&` +
+                `connect=true&` +
+                `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                `smart_wallet_mode=false`;
+
+            console.log('Opening Privy connection:', privyUrl);
+
+            // Open Privy connection in a popup window
+            const popup = window.open(
+                privyUrl,
+                'privy-connect',
+                'width=500,height=700,scrollbars=yes,resizable=yes'
+            );
+
+            if (!popup) {
+                throw new Error('Popup blocked. Please allow popups for this site.');
             }
 
-            // Use Privy's cross-app login for AGW
-            const user = await privyClient.loginWithCrossAppAccount({
-                appId: 'cm04asygd041fmry9zmcyn5o5'
-            });
+            // Listen for messages from the popup
+            const messageHandler = (event) => {
+                if (event.origin !== 'https://privy.abs.xyz') {
+                    return;
+                }
 
-            if (user && user.linkedAccounts) {
-                // Find the cross-app account
-                const crossAppAccount = user.linkedAccounts.find(
-                    (account) => account.type === 'cross_app' && account.providerApp.id === 'cm04asygd041fmry9zmcyn5o5'
-                );
-
-                if (crossAppAccount && crossAppAccount.embeddedWallets && crossAppAccount.embeddedWallets.length > 0) {
-                    currentAccount = crossAppAccount.embeddedWallets[0].address;
+                if (event.data.type === 'PRIVY_CONNECT_SUCCESS') {
+                    // Connection successful
+                    currentAccount = event.data.account;
                     isConnected = true;
-
-                    console.log('AGW Connection successful!');
-                    console.log('Connected wallet address:', currentAccount);
-                    console.log('Cross-app account:', crossAppAccount);
 
                     // Update button state
                     setButtonState(button, true, currentAccount);
 
                     // Show success message
-                    showNotification(`Abstract Global Wallet connected: ${currentAccount.slice(0, 6)}...${currentAccount.slice(-4)}`, 'success');
+                    showNotification('Abstract Global Wallet connected successfully!', 'success');
 
                     // Set current wallet address for save system
                     if (window.setCurrentWalletAddress) {
@@ -115,7 +84,7 @@
                     window.dispatchEvent(new CustomEvent('walletConnected', { 
                         detail: { 
                             wallet: currentAccount,
-                            provider: 'agw-privy-cross-app'
+                            provider: 'agw-privy'
                         } 
                     }));
 
@@ -162,23 +131,53 @@
                         }
                     }, 1000);
 
-                } else {
-                    throw new Error('No embedded wallet found in cross-app account');
-                }
+                    // Clean up
+                    window.removeEventListener('message', messageHandler);
+                    popup.close();
 
-            } else {
-                throw new Error('Failed to get user data from Privy');
-            }
+                } else if (event.data.type === 'PRIVY_CONNECT_ERROR') {
+                    // Connection failed
+                    throw new Error(event.data.error || 'Connection failed');
+                }
+            };
+
+            window.addEventListener('message', messageHandler);
+
+            // Handle popup close
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                    
+                    if (!isConnected) {
+                        setButtonState(button, false);
+                        showNotification('Connection cancelled', 'info');
+                    }
+                }
+            }, 1000);
+            
+            // Timeout after 5 minutes
+            setTimeout(() => {
+                if (!isConnected) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                    popup.close();
+                    setButtonState(button, false);
+                    showNotification('Connection timeout', 'error');
+                }
+            }, 300000); // 5 minutes
 
         } catch (error) {
             console.error('AGW connection error:', error);
             
             // More specific error handling
             let errorMessage = 'Failed to connect Abstract Global Wallet';
-            if (error.message.includes('Privy SDK')) {
-                errorMessage = 'Failed to load Privy SDK. Please refresh and try again.';
-            } else if (error.message.includes('embedded wallet')) {
-                errorMessage = 'No wallet found. Please make sure you have an AGW wallet.';
+            if (error.message.includes('window.ethereum')) {
+                errorMessage = 'Wallet conflict detected. Please try:\n1. Disable MetaMask temporarily\n2. Or use incognito mode\n3. Or try a different browser';
+            } else if (error.message.includes('popup')) {
+                errorMessage = 'Popup blocked. Please allow popups for this site.';
+            } else if (error.message.includes('public key')) {
+                errorMessage = 'Connection error. Please try again.';
             } else {
                 errorMessage = error.message;
             }
@@ -188,54 +187,6 @@
         }
     }
 
-    // Generate a unique requester public key for Privy cross-app connect
-    async function generateRequesterKey() {
-        try {
-            // Generate a proper ECDH P-256 key pair for Privy
-            const keyPair = await crypto.subtle.generateKey(
-                {
-                    name: 'ECDH',
-                    namedCurve: 'P-256'
-                },
-                true,
-                ['deriveKey', 'deriveBits']
-            );
-
-            // Export the public key in raw format (uncompressed)
-            const publicKeyBuffer = await crypto.subtle.exportKey('raw', keyPair.publicKey);
-            
-            // Convert to hex string (uncompressed public key format)
-            const publicKeyHex = Array.from(new Uint8Array(publicKeyBuffer))
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
-            
-            console.log('Generated ECDH P-256 public key for Privy:', publicKeyHex);
-            console.log('Key length:', publicKeyHex.length);
-            
-            return publicKeyHex;
-        } catch (error) {
-            console.error('Error generating ECDH key:', error);
-            
-            // Fallback: Generate a simple random key
-            try {
-                const array = new Uint8Array(32);
-                crypto.getRandomValues(array);
-                const hex = Array.from(array)
-                    .map(b => b.toString(16).padStart(2, '0'))
-                    .join('');
-                
-                console.log('Using fallback random key:', hex);
-                return hex;
-            } catch (fallbackError) {
-                console.error('Error generating fallback key:', fallbackError);
-                
-                // Final fallback: Use a fixed test key
-                const fallbackKey = 'dGVzdC1rZXktZm9yLXByaXZ5LWNvbm5lY3Rpb24tdGVzdA==';
-                console.log('Using final fallback key:', fallbackKey);
-                return fallbackKey;
-            }
-        }
-    }
 
     // Function to set button state
     function setButtonState(button, connected, account = null) {
@@ -360,5 +311,5 @@
         }, 2000);
     };
 
-    console.log('PrivyAGWConnect plugin loaded - Simple popup method');
+    console.log('PrivyAGWConnect plugin loaded - Simple popup method for AGW');
 })();
