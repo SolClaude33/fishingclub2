@@ -16,9 +16,7 @@ const scriptUrls = [
     "js/rmmz_windows.js",
     "js/plugins.js",
     "js/plugins/AutoStartGame.js",
-    "js/plugins/WalletConnect.js",
     "js/plugins/VendingMachinePayment.js",
-    "js/plugins/WalletSaveSystem.js",
     "js/plugins/FishingMinigame.js",
     "js/plugins/SimpleMenu.js",
     "js/plugins/CoinflipMinigame.js"
