@@ -96,13 +96,14 @@
             const messageHandler = (event) => {
                 console.log('Received message from popup:', event.origin, event.data);
                 
-                if (event.origin !== 'https://privy.abs.xyz') {
+                // Accept messages from both privy.abs.xyz and dashboard.privy.io
+                if (event.origin !== 'https://privy.abs.xyz' && event.origin !== 'https://dashboard.privy.io') {
                     return;
                 }
 
-                if (event.data.type === 'PRIVY_CONNECT_SUCCESS' || event.data.type === 'CONNECT_SUCCESS') {
+                if (event.data.type === 'PRIVY_CONNECT_SUCCESS' || event.data.type === 'CONNECT_SUCCESS' || event.data.type === 'WALLET_CONNECTED') {
                     // Connection successful
-                    currentAccount = event.data.account || event.data.walletAddress;
+                    currentAccount = event.data.account || event.data.walletAddress || event.data.address;
                     isConnected = true;
 
                     // Update button state
@@ -184,12 +185,42 @@
             };
 
             window.addEventListener('message', messageHandler);
+            
+            // Also listen for storage events (in case Privy uses localStorage)
+            const storageHandler = (e) => {
+                if (e.key && e.key.includes('privy') && e.newValue) {
+                    try {
+                        const data = JSON.parse(e.newValue);
+                        if (data.user && data.user.wallet && data.user.wallet.address) {
+                            currentAccount = data.user.wallet.address;
+                            isConnected = true;
+                            
+                            // Update button state
+                            setButtonState(button, true, currentAccount);
+                            showNotification('Abstract Global Wallet connected successfully!', 'success');
+                            
+                            // Set current wallet address for save system
+                            if (window.setCurrentWalletAddress) {
+                                window.setCurrentWalletAddress(currentAccount);
+                            }
+                            
+                            // Clean up
+                            window.removeEventListener('storage', storageHandler);
+                            popup.close();
+                        }
+                    } catch (err) {
+                        // Ignore parsing errors
+                    }
+                }
+            };
+            window.addEventListener('storage', storageHandler);
 
             // Handle popup close and check for URL changes
             const checkClosed = setInterval(() => {
                 if (popup.closed) {
                     clearInterval(checkClosed);
                     window.removeEventListener('message', messageHandler);
+                    window.removeEventListener('storage', storageHandler);
                     
                     if (!isConnected) {
                         setButtonState(button, false);
@@ -201,7 +232,7 @@
                         if (popup.location.href.includes(window.location.origin)) {
                             // Popup redirected back, check for wallet data
                             const urlParams = new URLSearchParams(popup.location.search);
-                            const walletAddress = urlParams.get('wallet') || urlParams.get('address');
+                            const walletAddress = urlParams.get('wallet') || urlParams.get('address') || urlParams.get('account');
                             
                             if (walletAddress) {
                                 currentAccount = walletAddress;
@@ -224,6 +255,7 @@
                         }
                     } catch (e) {
                         // Cross-origin error, ignore
+                        console.log('Cross-origin error checking popup location:', e.message);
                     }
                 }
             }, 1000);
@@ -233,6 +265,7 @@
                 if (!isConnected) {
                     clearInterval(checkClosed);
                     window.removeEventListener('message', messageHandler);
+                    window.removeEventListener('storage', storageHandler);
                     popup.close();
                     setButtonState(button, false);
                     showNotification('Connection timeout', 'error');
