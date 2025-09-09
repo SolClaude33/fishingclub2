@@ -99,11 +99,32 @@ class ReactWalletConnect {
     async loadPrivy() {
         if (this.isPrivyLoaded) return;
 
+        const cdnUrls = [
+            'https://cdn.jsdelivr.net/npm/@privy-io/react-auth@2.24.0/dist/index.umd.js',
+            'https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js'
+        ];
+
+        for (let i = 0; i < cdnUrls.length; i++) {
+            try {
+                await this.loadPrivyFromUrl(cdnUrls[i]);
+                this.isPrivyLoaded = true;
+                return;
+            } catch (error) {
+                console.warn(`⚠️ Failed to load Privy from CDN ${i + 1}:`, cdnUrls[i], error);
+                if (i === cdnUrls.length - 1) {
+                    throw new Error('All Privy CDNs failed to load');
+                }
+            }
+        }
+    }
+
+    async loadPrivyFromUrl(url) {
         return new Promise((resolve, reject) => {
             const privyScript = document.createElement('script');
-            privyScript.src = 'https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js';
+            privyScript.src = url;
             privyScript.onload = () => {
-                console.log('✅ Privy loaded:', typeof window.PrivyReactAuth);
+                console.log('✅ Privy loaded from:', url);
+                console.log('🔍 window.PrivyReactAuth:', typeof window.PrivyReactAuth);
                 console.log('🔍 window.PrivyReactAuth:', window.PrivyReactAuth);
                 // Wait a bit for Privy to be available
                 setTimeout(() => {
@@ -115,17 +136,32 @@ class ReactWalletConnect {
                         window.PrivyProvider = window.PrivyReactAuth.PrivyProvider;
                         window.usePrivy = window.PrivyReactAuth.usePrivy;
                         console.log('✅ PrivyProvider extracted:', typeof window.PrivyProvider);
+                        resolve();
                     } else {
                         console.error('❌ PrivyProvider not found in PrivyReactAuth');
                         reject(new Error('PrivyProvider not found'));
                         return;
                     }
-                    
-                    this.isPrivyLoaded = true;
-                    resolve();
                 }, 100);
             };
-            privyScript.onerror = reject;
+            privyScript.onerror = (error) => {
+                console.error('❌ Privy script failed to load from:', url);
+                console.error('❌ Error details:', {
+                    type: error.type,
+                    target: error.target,
+                    currentTarget: error.currentTarget,
+                    eventPhase: error.eventPhase,
+                    bubbles: error.bubbles,
+                    cancelable: error.cancelable,
+                    defaultPrevented: error.defaultPrevented,
+                    isTrusted: error.isTrusted,
+                    timeStamp: error.timeStamp
+                });
+                console.error('❌ Script src:', privyScript.src);
+                console.error('❌ Script readyState:', privyScript.readyState);
+                console.error('❌ Script crossOrigin:', privyScript.crossOrigin);
+                reject(error);
+            };
             document.head.appendChild(privyScript);
         });
     }
