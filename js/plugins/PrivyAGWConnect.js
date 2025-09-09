@@ -248,6 +248,7 @@
 
     // Create wallet connect button
     function createWalletButton() {
+        console.log('Creating wallet connect button...');
         const button = document.createElement('button');
         button.id = 'wallet-connect-btn';
         button.style.cssText = `
@@ -271,6 +272,7 @@
 
         // Click handler
         button.addEventListener('click', (e) => {
+            console.log('Wallet connect button clicked!');
             if (!button.disabled) {
                 connectAGW();
             }
@@ -278,7 +280,8 @@
 
         // Set initial state
         setButtonState(button, false);
-
+        
+        console.log('Wallet connect button created successfully:', button);
         return button;
     }
 
@@ -330,10 +333,26 @@
         // Add wallet button after a short delay to ensure DOM is ready
         setTimeout(() => {
             if (!document.getElementById('wallet-connect-btn')) {
+                console.log('Creating wallet connect button...');
                 const walletButton = createWalletButton();
                 document.body.appendChild(walletButton);
+                console.log('Wallet connect button created and added to DOM');
+            } else {
+                console.log('Wallet connect button already exists');
             }
         }, 1000);
+        
+        // Also try to add button immediately if DOM is ready
+        if (document.readyState === 'complete') {
+            setTimeout(() => {
+                if (!document.getElementById('wallet-connect-btn')) {
+                    console.log('Creating wallet connect button (immediate)...');
+                    const walletButton = createWalletButton();
+                    document.body.appendChild(walletButton);
+                    console.log('Wallet connect button created immediately');
+                }
+            }, 100);
+        }
         
         // Reset fishing system when game starts
         setTimeout(() => {
@@ -343,6 +362,30 @@
             }
         }, 2000);
     };
+
+    // Also initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (!document.getElementById('wallet-connect-btn')) {
+                    console.log('Creating wallet connect button (DOMContentLoaded)...');
+                    const walletButton = createWalletButton();
+                    document.body.appendChild(walletButton);
+                    console.log('Wallet connect button created on DOMContentLoaded');
+                }
+            }, 500);
+        });
+    } else {
+        // DOM is already ready
+        setTimeout(() => {
+            if (!document.getElementById('wallet-connect-btn')) {
+                console.log('Creating wallet connect button (DOM ready)...');
+                const walletButton = createWalletButton();
+                document.body.appendChild(walletButton);
+                console.log('Wallet connect button created on DOM ready');
+            }
+        }, 500);
+    }
 
     console.log('PrivyAGWConnect plugin loaded - Simple popup method for AGW');
 })();
