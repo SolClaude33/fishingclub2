@@ -71,11 +71,13 @@
             // Get the current origin
             const requesterOrigin = window.location.origin;
             
-            // Create the Privy connection URL - try dashboard.privy.io instead
-            const privyUrl = `https://dashboard.privy.io/connect?` +
-                `app_id=cm04asygd041fmry9zmcyn5o5&` +
-                `redirect_uri=${encodeURIComponent(requesterOrigin)}&` +
-                `provider=abstract`;
+            // Create the Privy connection URL - try the original cross-app URL format
+            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                `connect=true&` +
+                `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                `smart_wallet_mode=false&` +
+                `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
 
             console.log('Opening Privy connection:', privyUrl);
 
