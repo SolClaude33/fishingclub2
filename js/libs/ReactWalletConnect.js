@@ -378,7 +378,7 @@ class ReactWalletConnect {
 
         const App = () => {
             return React.createElement(AbstractPrivyProvider, { 
-                appId: "cm04asygd041fmry9zmcyn5o5" // Your Privy app ID
+                appId: "cmfa4s0v800s8180b9c8eiatl" // Your actual Privy app ID
                 // AbstractPrivyProvider handles the Privy configuration internally
             }, React.createElement(WalletConnectButton));
         };
