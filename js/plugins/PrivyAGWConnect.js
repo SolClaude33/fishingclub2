@@ -56,7 +56,8 @@
     let reactWalletConnect = null;
     let walletContainer = null;
 
-    console.log('PrivyAGWConnect: React-based AGW connection initialized');
+    console.log('🚀 PrivyAGWConnect: React-based AGW connection initialized');
+    console.log('🔧 Plugin parameters:', { appId, buttonText, buttonPosition, useReact });
 
     // Load React Wallet Connect library
     function loadReactWalletConnect() {

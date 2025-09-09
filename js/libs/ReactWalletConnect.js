@@ -243,6 +243,14 @@ class ReactWalletConnect {
             isConnected: this.isConnected
         };
     }
+
+    // Initialize method for compatibility with the plugin
+    async initialize(containerId, callbacks = {}) {
+        console.log('🎯 ReactWalletConnect: Initializing with container:', containerId);
+        this.containerId = containerId;
+        this.callbacks = callbacks;
+        this.init();
+    }
 }
 
 // Make it globally available
