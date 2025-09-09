@@ -321,8 +321,19 @@ class ReactWalletConnect {
         console.log('🎯 ReactWalletConnect: Initializing with container:', containerId);
         this.containerId = containerId;
         this.callbacks = callbacks;
-        // No need to call this.init() as it's already called in constructor
-        console.log('✅ ReactWalletConnect: Initialization complete');
+        
+        try {
+            console.log('🔄 Loading React and ReactDOM...');
+            await this.loadReact();
+            console.log('🔄 Loading Privy...');
+            await this.loadPrivy();
+            console.log('🔄 Creating wallet connect component...');
+            await this.createWalletConnectComponent();
+            console.log('✅ ReactWalletConnect: Initialization complete');
+        } catch (error) {
+            console.error('❌ ReactWalletConnect: Initialization failed:', error);
+            throw error;
+        }
     }
 }
 
