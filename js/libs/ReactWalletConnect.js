@@ -284,34 +284,11 @@ class ReactWalletConnect {
         window.PrivyProvider = ({ children, appId }) => {
             console.log('🔧 Fallback PrivyProvider rendering with appId:', appId);
             
-            // Create a simple button that opens Privy directly
-            const handleConnect = () => {
-                console.log('🔧 Fallback connect clicked with App ID:', appId);
-                // Open Privy directly with the correct App ID using the cross-app connect URL
-                const privyUrl = `https://privy.abs.xyz/cross-app/connect?provider_app_id=${appId}&requester_origin=${encodeURIComponent(window.location.origin)}&redirect_uri=${encodeURIComponent(window.location.origin)}`;
-                window.open(privyUrl, '_blank', 'width=500,height=600');
-            };
-            
+            // Just render the children - the button will be created by the WalletConnectButton component
             return React.createElement('div', { 
                 id: 'privy-provider-fallback',
                 style: { padding: '10px' }
-            }, [
-                React.createElement('button', {
-                    key: 'connect-btn',
-                    onClick: handleConnect,
-                    style: {
-                        backgroundColor: '#676FFF',
-                        color: 'white',
-                        border: 'none',
-                        padding: '10px 20px',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 'bold'
-                    }
-                }, 'Connect Abstract Global Wallet'),
-                children
-            ]);
+            }, children);
         };
         
         window.usePrivy = () => {
