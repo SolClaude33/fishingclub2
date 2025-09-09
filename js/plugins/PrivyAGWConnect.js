@@ -182,7 +182,12 @@
             console.log('🔍 ReactDOM available:', typeof window.ReactDOM);
             console.log('🔍 Privy available:', typeof window.PrivyReactAuth);
             console.log('🔍 Container ID:', container.id);
-            await reactWalletConnect.initialize(container.id || 'react-wallet-connect', {
+            console.log('🔍 Container element:', container);
+            
+            const containerId = container.id || 'react-wallet-connect';
+            console.log('🔧 Using container ID:', containerId);
+            
+            await reactWalletConnect.initialize(containerId, {
                 onConnect: (address, user) => {
                     console.log('✅ Wallet connected:', address);
                     currentAccount = address;

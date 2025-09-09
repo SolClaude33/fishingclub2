@@ -95,15 +95,76 @@ class ReactWalletConnect {
         });
     }
 
+    // Load Privy SDK directly
+    async loadPrivySDK() {
+        return new Promise((resolve, reject) => {
+            console.log('🔄 Loading Privy SDK directly...');
+            
+            // Create Privy SDK script
+            const privyScript = document.createElement('script');
+            privyScript.src = 'https://sdk.privy.io/privy-js.js';
+            privyScript.async = true;
+            privyScript.onload = () => {
+                console.log('✅ Privy SDK loaded directly');
+                // Set up Privy provider
+                window.PrivyProvider = ({ children, appId }) => {
+                    console.log('🔧 Direct PrivyProvider rendering with appId:', appId);
+                    return React.createElement('div', { 
+                        id: 'privy-provider-direct',
+                        'data-privy-app-id': appId 
+                    }, children);
+                };
+                
+                window.usePrivy = () => {
+                    return {
+                        ready: true,
+                        authenticated: false,
+                        user: null,
+                        login: () => {
+                            console.log('🔧 Direct Privy login called');
+                            // Use Privy SDK directly
+                            if (window.Privy) {
+                                window.Privy.login();
+                            } else {
+                                alert('Privy SDK not available');
+                            }
+                        },
+                        logout: () => {
+                            console.log('🔧 Direct Privy logout called');
+                            if (window.Privy) {
+                                window.Privy.logout();
+                            }
+                        }
+                    };
+                };
+                
+                resolve();
+            };
+            privyScript.onerror = (error) => {
+                console.error('❌ Failed to load Privy SDK directly:', error);
+                reject(error);
+            };
+            document.head.appendChild(privyScript);
+        });
+    }
+
     // Load Privy SDK
     async loadPrivy() {
         if (this.isPrivyLoaded) return;
 
+        // Try direct SDK first
+        try {
+            await this.loadPrivySDK();
+            this.isPrivyLoaded = true;
+            console.log('✅ Privy loaded via direct SDK');
+            return;
+        } catch (error) {
+            console.warn('⚠️ Direct Privy SDK failed, trying CDNs:', error);
+        }
+
         const cdnUrls = [
             'https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js',
-            'https://cdn.jsdelivr.net/npm/@privy-io/react-auth@2.24.0/dist/index.umd.js',
-            'https://unpkg.com/@abstract-foundation/agw-react@latest/dist/index.umd.js',
-            'https://cdn.jsdelivr.net/npm/@abstract-foundation/agw-react@latest/dist/index.umd.js'
+            'https://cdn.jsdelivr.net/npm/@privy-io/react-auth@2.24.0/dist/index.umd.js'
         ];
 
         for (let i = 0; i < cdnUrls.length; i++) {
@@ -116,7 +177,7 @@ class ReactWalletConnect {
             } catch (error) {
                 console.warn(`⚠️ Failed to load Privy from CDN ${i + 1}:`, cdnUrls[i], error);
                 if (i === cdnUrls.length - 1) {
-                    console.error('❌ All Privy CDNs failed, creating fallback provider...');
+                    console.error('❌ All Privy loading methods failed, creating fallback provider...');
                     // Create a fallback provider instead of throwing an error
                     this.createFallbackProvider();
                     this.isPrivyLoaded = true;
@@ -217,47 +278,50 @@ class ReactWalletConnect {
 
     // Create fallback provider when Privy fails to load
     createFallbackProvider() {
-        console.log('🔧 Creating fallback PrivyProvider with direct Privy integration...');
+        console.log('🔧 Creating fallback PrivyProvider with correct App ID...');
         
-        // Create a fallback provider that uses Privy directly
+        // Create a fallback provider that uses the correct App ID
         window.PrivyProvider = ({ children, appId }) => {
             console.log('🔧 Fallback PrivyProvider rendering with appId:', appId);
             
-            // Use Privy directly if available
-            if (window.PrivyReactAuth && window.PrivyReactAuth.PrivyProvider) {
-                console.log('🔧 Using real PrivyProvider from PrivyReactAuth');
-                return React.createElement(window.PrivyReactAuth.PrivyProvider, {
-                    appId: appId,
-                    config: {
-                        loginMethods: ['email', 'sms'],
-                        appearance: {
-                            theme: 'light',
-                            accentColor: '#676FFF',
-                        },
-                        embeddedWallets: {
-                            createOnLogin: 'users-without-wallets'
-                        }
-                    }
-                }, children);
-            }
+            // Create a simple button that opens Privy directly
+            const handleConnect = () => {
+                console.log('🔧 Fallback connect clicked with App ID:', appId);
+                // Open Privy directly with the correct App ID
+                const privyUrl = `https://auth.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`;
+                window.open(privyUrl, '_blank', 'width=500,height=600');
+            };
             
-            // Fallback to simple div
-            return React.createElement('div', { id: 'privy-provider-fallback' }, children);
+            return React.createElement('div', { 
+                id: 'privy-provider-fallback',
+                style: { padding: '10px' }
+            }, [
+                React.createElement('button', {
+                    key: 'connect-btn',
+                    onClick: handleConnect,
+                    style: {
+                        backgroundColor: '#676FFF',
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                    }
+                }, 'Connect Abstract Global Wallet'),
+                children
+            ]);
         };
         
         window.usePrivy = () => {
-            if (window.PrivyReactAuth && window.PrivyReactAuth.usePrivy) {
-                console.log('🔧 Using real usePrivy from PrivyReactAuth');
-                return window.PrivyReactAuth.usePrivy();
-            }
-            
             return {
                 ready: true,
                 authenticated: false,
                 user: null,
                 login: () => {
-                    console.log('🔧 Fallback login called - showing message');
-                    alert('Abstract Global Wallet connection is temporarily unavailable. Please try again later.');
+                    console.log('🔧 Fallback login called with App ID');
+                    // This will be handled by the button click
                 },
                 logout: () => {
                     console.log('🔧 Fallback logout called');
