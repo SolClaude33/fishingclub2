@@ -158,36 +158,42 @@
 
     // Initialize React wallet connection
     async function initializeReactWallet() {
+        console.log('🚀 initializeReactWallet: Starting...');
         try {
+            console.log('📦 Loading React wallet connect...');
             await loadReactWalletConnect();
             
+            console.log('🔧 Creating ReactWalletConnect instance...');
             reactWalletConnect = new window.ReactWalletConnect();
             
+            console.log('📦 Creating wallet container...');
             const container = createWalletContainer();
+            console.log('📦 Container created:', container.id);
             
+            console.log('🎯 Initializing React wallet with container...');
             await reactWalletConnect.initialize(container.id, {
                 onConnect: (address, user) => {
-                    console.log('Wallet connected:', address);
+                    console.log('✅ Wallet connected:', address);
                     currentAccount = address;
                     isConnected = true;
                     $gameMessage.add(`Wallet connected: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`);
                 },
                 onDisconnect: () => {
-                    console.log('Wallet disconnected');
+                    console.log('❌ Wallet disconnected');
                     currentAccount = null;
                     isConnected = false;
                     $gameMessage.add('Wallet disconnected');
                 },
                 onError: (error) => {
-                    console.error('Wallet error:', error);
+                    console.error('💥 Wallet error:', error);
                     $gameMessage.add('Wallet connection error');
                 }
             });
 
-            console.log('React wallet connection initialized');
+            console.log('✅ React wallet connection initialized successfully');
             return true;
         } catch (error) {
-            console.error('Failed to initialize React wallet:', error);
+            console.error('💥 Failed to initialize React wallet:', error);
             return false;
         }
     }
@@ -270,13 +276,18 @@
     // Initialize when scene starts
     const _SceneManager_run = SceneManager.run;
     SceneManager.run = function(sceneClass) {
+        console.log('🎬 SceneManager.run called with:', sceneClass.name);
         _SceneManager_run.call(this, sceneClass);
         
         if (useReact) {
+            console.log('⏰ Setting timeout for React wallet initialization...');
             // Initialize React wallet connection
             setTimeout(async () => {
+                console.log('⏰ Timeout triggered - initializing React wallet...');
                 await initializeReactWallet();
             }, 2000);
+        } else {
+            console.log('❌ useReact is false, not initializing React wallet');
         }
     };
 
