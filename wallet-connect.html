@@ -71,62 +71,75 @@
     </div>
 
     <!-- React and dependencies -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/@abstract-foundation/agw-react@1.9.0/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/wagmi@2.16.9/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/viem@2.37.4/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/@tanstack/react-query@5.87.1/dist/index.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 
     <script>
         const { useState, useEffect } = React;
-        const { PrivyProvider, usePrivy, useWallets } = window.PrivyReactAuth;
-        const { AbstractPrivyProvider } = window.AbstractAGWReact;
 
         function WalletConnectButton() {
-            const { ready, authenticated, user, login, logout } = usePrivy();
-            const { wallets } = useWallets();
             const [walletAddress, setWalletAddress] = useState(null);
+            const [isConnecting, setIsConnecting] = useState(false);
+            const [error, setError] = useState(null);
 
+            const handleConnect = async () => {
+                setIsConnecting(true);
+                setError(null);
+                
+                try {
+                    // Use the original Privy cross-app connect method
+                    const requesterOrigin = window.location.origin;
+                    const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
+                        `provider_app_id=cm04asygd041fmry9zmcyn5o5&` +
+                        `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
+                        `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
+
+                    // Open in same window for simplicity
+                    window.location.href = privyUrl;
+                } catch (error) {
+                    console.error('Connection error:', error);
+                    setError('Failed to connect wallet');
+                    setIsConnecting(false);
+                }
+            };
+
+            const handleDisconnect = () => {
+                setWalletAddress(null);
+                // Send disconnect message to parent
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'WALLET_DISCONNECTED'
+                    }, '*');
+                }
+            };
+
+            // Check for wallet data in URL parameters (for redirect method)
             useEffect(() => {
-                if (authenticated && user && user.wallet) {
-                    setWalletAddress(user.wallet.address);
+                const urlParams = new URLSearchParams(window.location.search);
+                const wallet = urlParams.get('wallet');
+                const address = urlParams.get('address');
+                const account = urlParams.get('account');
+                
+                if (wallet || address || account) {
+                    const walletAddr = wallet || address || account;
+                    setWalletAddress(walletAddr);
+                    
                     // Send wallet address back to parent window
                     if (window.opener) {
                         window.opener.postMessage({
                             type: 'WALLET_CONNECTED',
-                            address: user.wallet.address,
-                            user: user
+                            address: walletAddr
                         }, '*');
                     }
+                    
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
                 }
-            }, [authenticated, user]);
-
-            const handleConnect = async () => {
-                try {
-                    await login();
-                } catch (error) {
-                    console.error('Login error:', error);
-                }
-            };
-
-            const handleDisconnect = async () => {
-                try {
-                    await logout();
-                    setWalletAddress(null);
-                } catch (error) {
-                    console.error('Logout error:', error);
-                }
-            };
-
-            if (!ready) {
-                return <div>Loading...</div>;
-            }
+            }, []);
 
             return (
                 <div>
-                    {authenticated && walletAddress ? (
+                    {walletAddress ? (
                         <div>
                             <div className="wallet-info success">
                                 <strong>Connected!</strong><br/>
@@ -137,20 +150,23 @@
                             </button>
                         </div>
                     ) : (
-                        <button className="wallet-button" onClick={handleConnect}>
-                            Connect Abstract Global Wallet
-                        </button>
+                        <div>
+                            <button 
+                                className="wallet-button" 
+                                onClick={handleConnect}
+                                disabled={isConnecting}
+                            >
+                                {isConnecting ? 'Connecting...' : 'Connect Abstract Global Wallet'}
+                            </button>
+                            {error && <div className="error">{error}</div>}
+                        </div>
                     )}
                 </div>
             );
         }
 
         function App() {
-            return (
-                <AbstractPrivyProvider appId="cm04asygd041fmry9zmcyn5o5">
-                    <WalletConnectButton />
-                </AbstractPrivyProvider>
-            );
+            return React.createElement(WalletConnectButton);
         }
 
         // Render the app
