@@ -1,41 +1,37 @@
 /*:
  * @target MZ
- * @plugindesc PrivyAGWConnect v2.0.0 - React-based Privy SDK integration for Abstract Global Wallet
- * @author SolClaude33
- * @url https://github.com/SolClaude33/fishingclub2
+ * @plugindesc PrivyAGWConnect - Simple React-based Abstract Global Wallet connection
+ * @author Your Name
+ * @url https://your-website.com
  * @help PrivyAGWConnect.js
  * 
- * This plugin integrates React-based Privy SDK with Abstract Global Wallet for seamless wallet connectivity.
+ * This plugin provides a simple React-based wallet connection using Privy and Abstract Global Wallet.
  * 
  * @param appId
  * @text Privy App ID
- * @desc Your Privy application ID
- * @type text
- * @default cm04asygd041fmry9zmcyn5o5
+ * @desc Your Privy App ID
+ * @type string
+ * @default cmfa4s0v800s8180b9c8eiatl
  * 
  * @param buttonText
  * @text Button Text
- * @desc Text displayed on the connect button
- * @type text
- * @default Connect AGW
+ * @desc Text to display on the connect button
+ * @type string
+ * @default Connect Abstract Global Wallet
  * 
  * @param buttonPosition
  * @text Button Position
- * @desc Position of the connect button
+ * @desc Position of the wallet button
  * @type select
- * @option Top Left
- * @value top-left
- * @option Top Right
- * @value top-right
- * @option Bottom Left
- * @value bottom-left
- * @option Bottom Right
- * @value bottom-right
+ * @option top-right
+ * @option top-left
+ * @option bottom-right
+ * @option bottom-left
  * @default top-right
  * 
  * @param useReact
  * @text Use React
- * @desc Use React-based wallet connection (recommended)
+ * @desc Use React-based wallet connection
  * @type boolean
  * @default true
  */
@@ -45,307 +41,176 @@
 
     // Plugin parameters
     const parameters = PluginManager.parameters('PrivyAGWConnect');
-    const appId = parameters['appId'] || 'cm04asygd041fmry9zmcyn5o5';
-    const buttonText = parameters['buttonText'] || 'Connect AGW';
+    const appId = parameters['appId'] || 'cmfa4s0v800s8180b9c8eiatl';
+    const buttonText = parameters['buttonText'] || 'Connect Abstract Global Wallet';
     const buttonPosition = parameters['buttonPosition'] || 'top-right';
     const useReact = parameters['useReact'] === 'true' || parameters['useReact'] === true;
 
     // Global state
     let isConnected = false;
     let currentAccount = null;
-    let reactWalletConnect = null;
+    let reactPrivyWallet = null;
     let walletContainer = null;
 
-    console.log('🚀 PrivyAGWConnect: React-based AGW connection initialized');
+    console.log('🚀 PrivyAGWConnect: Simple React-based AGW connection initialized');
     console.log('🔧 Plugin parameters:', { appId, buttonText, buttonPosition, useReact });
-    console.log('🔥 FORZANDO ACTUALIZACION - VERSION 2.0.1');
-    console.log('🔍 Raw useReact parameter:', parameters['useReact'], 'Type:', typeof parameters['useReact']);
-    
-    // Force useReact to true for debugging
-    const forceUseReact = true;
-    console.log('🚀 FORCING useReact to true for debugging');
+    console.log('🔥 VERSION 2.0.2 - Simple React Implementation');
 
-    // Load React Wallet Connect library
-    function loadReactWalletConnect() {
-        console.log('📦 loadReactWalletConnect: Starting to load React library...');
+    // Load React Privy Wallet library
+    function loadReactPrivyWallet() {
+        console.log('📦 Loading React Privy Wallet library...');
         return new Promise((resolve, reject) => {
-            if (window.ReactWalletConnect) {
-                console.log('✅ ReactWalletConnect already loaded');
+            if (window.ReactPrivyWallet) {
+                console.log('✅ ReactPrivyWallet already loaded');
                 resolve();
                 return;
             }
 
             const script = document.createElement('script');
-            script.src = './js/libs/ReactWalletConnect.js';
+            script.src = './js/libs/ReactPrivyWallet.js';
             script.onload = () => {
-                console.log('✅ ReactWalletConnect library loaded successfully');
+                console.log('✅ ReactPrivyWallet loaded successfully');
                 resolve();
             };
             script.onerror = () => {
-                console.error('❌ Failed to load ReactWalletConnect library');
-                reject(new Error('Failed to load ReactWalletConnect library'));
+                console.error('❌ Failed to load ReactPrivyWallet');
+                reject(new Error('Failed to load ReactPrivyWallet'));
             };
             document.head.appendChild(script);
-            console.log('📤 Script tag added to head');
         });
+    }
+
+    // Initialize the wallet connection
+    async function initializeWalletConnection() {
+        try {
+            console.log('🔄 Initializing wallet connection...');
+            
+            // Load the React library
+            await loadReactPrivyWallet();
+            
+            // Create the wallet container
+            createWalletContainer();
+            
+            // Initialize the React wallet
+            reactPrivyWallet = new window.ReactPrivyWallet();
+            
+            // Set up callbacks
+            reactPrivyWallet.onConnect((address, user) => {
+                console.log('✅ Wallet connected:', address);
+                isConnected = true;
+                currentAccount = address;
+                
+                // Update UI
+                updateWalletUI();
+                
+                // Trigger game events
+                $gameMessage.add('Wallet connected: ' + address.slice(0, 6) + '...' + address.slice(-4));
+            });
+            
+            reactPrivyWallet.onDisconnect(() => {
+                console.log('❌ Wallet disconnected');
+                isConnected = false;
+                currentAccount = null;
+                
+                // Update UI
+                updateWalletUI();
+                
+                // Trigger game events
+                $gameMessage.add('Wallet disconnected');
+            });
+            
+            reactPrivyWallet.onError((error) => {
+                console.error('❌ Wallet error:', error);
+                $gameMessage.add('Wallet connection error: ' + error.message);
+            });
+            
+            // Initialize the React component
+            reactPrivyWallet.initialize('privy-wallet-container');
+            
+            console.log('✅ Wallet connection initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize wallet connection:', error);
+            $gameMessage.add('Failed to initialize wallet connection');
+        }
     }
 
     // Create wallet container
     function createWalletContainer() {
-        if (walletContainer) return walletContainer;
-
+        // Remove existing container if any
+        const existing = document.getElementById('privy-wallet-container');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // Create new container
         walletContainer = document.createElement('div');
-        walletContainer.id = 'react-wallet-connect';
+        walletContainer.id = 'privy-wallet-container';
+        
+        // Set position based on parameter
+        const position = buttonPosition.split('-');
+        const vertical = position[0];
+        const horizontal = position[1];
+        
         walletContainer.style.cssText = `
             position: fixed;
-            z-index: 10000;
-            ${buttonPosition.includes('top') ? 'top: 20px;' : 'bottom: 20px;'}
-            ${buttonPosition.includes('left') ? 'left: 20px;' : 'right: 20px;'}
+            ${vertical}: 20px;
+            ${horizontal}: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 2px solid #4CAF50;
             font-family: Arial, sans-serif;
+            min-width: 200px;
         `;
-
-        // Add styles
-        const style = document.createElement('style');
-        style.textContent = `
-            .wallet-connect-container {
-                background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
-                border-radius: 12px;
-                padding: 15px 20px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                color: white;
-                min-width: 200px;
-                text-align: center;
-            }
-            .wallet-button {
-                background: rgba(255,255,255,0.2);
-                color: white;
-                border: 2px solid rgba(255,255,255,0.3);
-                border-radius: 8px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                margin: 5px;
-                min-width: 150px;
-            }
-            .wallet-button:hover {
-                background: rgba(255,255,255,0.3);
-                transform: translateY(-2px);
-            }
-            .wallet-button:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-            }
-            .wallet-info {
-                background: rgba(255,255,255,0.1);
-                border-radius: 8px;
-                padding: 10px;
-                margin: 10px 0;
-                font-size: 12px;
-                word-break: break-all;
-            }
-            .wallet-error {
-                color: #ff6b6b;
-                font-size: 12px;
-                margin-top: 5px;
-            }
-            .wallet-loading {
-                color: #ffd93d;
-                font-size: 14px;
-            }
-        `;
-        document.head.appendChild(style);
-
+        
         document.body.appendChild(walletContainer);
-        console.log('📦 Container appended to DOM:', walletContainer);
-        console.log('📦 Container in DOM check:', document.getElementById('react-wallet-connect'));
-        return walletContainer;
+        console.log('✅ Wallet container created at', buttonPosition);
     }
 
-    // Initialize React wallet connection
-    async function initializeReactWallet() {
-        console.log('🚀 initializeReactWallet: Starting...');
-        try {
-            console.log('📦 Loading React wallet connect...');
-            await loadReactWalletConnect();
-            
-            console.log('🔧 Creating ReactWalletConnect instance...');
-            reactWalletConnect = new window.ReactWalletConnect();
-            
-            console.log('📦 Creating wallet container...');
-            const container = createWalletContainer();
-            console.log('📦 Container created:', container.id);
-            
-            console.log('🎯 Initializing React wallet with container...');
-            console.log('🔍 React available:', typeof window.React);
-            console.log('🔍 ReactDOM available:', typeof window.ReactDOM);
-            console.log('🔍 Privy available:', typeof window.PrivyReactAuth);
-            console.log('🔍 Container ID:', container.id);
-            console.log('🔍 Container element:', container);
-            
-            const containerId = container.id || 'react-wallet-connect';
-            console.log('🔧 Using container ID:', containerId);
-            
-            await reactWalletConnect.initialize(containerId, {
-                onConnect: (address, user) => {
-                    console.log('✅ Wallet connected:', address);
-                    currentAccount = address;
-                    isConnected = true;
-                    $gameMessage.add(`Wallet connected: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`);
-                },
-                onDisconnect: () => {
-                    console.log('❌ Wallet disconnected');
-                    currentAccount = null;
-                    isConnected = false;
-                    $gameMessage.add('Wallet disconnected');
-                },
-                onError: (error) => {
-                    console.error('💥 Wallet error:', error);
-                    $gameMessage.add('Wallet connection error');
-                }
-            });
-
-            console.log('✅ React wallet connection initialized successfully');
-            return true;
-        } catch (error) {
-            console.error('💥 Failed to initialize React wallet:', error);
-            return false;
-        }
+    // Update wallet UI
+    function updateWalletUI() {
+        if (!walletContainer) return;
+        
+        // This will be handled by the React component
+        console.log('🔄 Wallet UI updated');
     }
 
-    // Fallback: Simple popup method
-    async function connectAGWSimple() {
-        try {
-            const requesterOrigin = window.location.origin;
-            const privyUrl = `https://privy.abs.xyz/cross-app/connect?` +
-                `provider_app_id=${appId}&` +
-                `requester_origin=${encodeURIComponent(requesterOrigin)}&` +
-                `redirect_uri=${encodeURIComponent(requesterOrigin)}`;
-
-            console.log('Opening Privy connection:', privyUrl);
-
-            const popup = window.open(
-                privyUrl,
-                'privy-connect',
-                'width=500,height=700,scrollbars=yes,resizable=yes'
-            );
-
-            if (!popup) {
-                window.location.href = privyUrl;
-                return;
-            }
-
-            // Listen for messages
-            const messageHandler = (event) => {
-                if (event.origin !== 'https://privy.abs.xyz' && event.origin !== 'https://dashboard.privy.io') {
-                    return;
-                }
-
-                if (event.data.type === 'PRIVY_CONNECT_SUCCESS' || event.data.type === 'CONNECT_SUCCESS') {
-                    currentAccount = event.data.account || event.data.walletAddress || event.data.address;
-                    isConnected = true;
-                    $gameMessage.add(`Wallet connected: ${currentAccount.substring(0, 6)}...${currentAccount.substring(currentAccount.length - 4)}`);
-                    popup.close();
-                    window.removeEventListener('message', messageHandler);
-                }
-            };
-
-            window.addEventListener('message', messageHandler);
-
-            // Check if popup is closed
-            const checkClosed = setInterval(() => {
-                if (popup.closed) {
-                    clearInterval(checkClosed);
-                    window.removeEventListener('message', messageHandler);
-                }
-            }, 1000);
-
-        } catch (error) {
-            console.error('Connection error:', error);
-            $gameMessage.add('Failed to connect wallet');
-        }
-    }
-
-    // Main connection function
-    async function connectAGW() {
-        if (useReact && reactWalletConnect) {
-            // React method - the component handles the connection
-            console.log('Using React wallet connection');
-        } else {
-            // Fallback to simple popup method
-            await connectAGWSimple();
-        }
-    }
-
-    // Get wallet state
-    function getWalletState() {
-        if (useReact && reactWalletConnect) {
-            return reactWalletConnect.getWalletState();
-        }
-        return {
-            address: currentAccount,
-            isConnected: isConnected
-        };
-    }
-
-    // Initialize when scene starts
+    // Scene Manager hook
     const _SceneManager_run = SceneManager.run;
     SceneManager.run = function(sceneClass) {
         console.log('🎬 SceneManager.run called with:', sceneClass.name);
-        _SceneManager_run.call(this, sceneClass);
         
-        if (forceUseReact) {
-            console.log('⏰ Setting timeout for React wallet initialization...');
-            // Initialize React wallet connection
-            setTimeout(async () => {
-                console.log('⏰ Timeout triggered - initializing React wallet...');
-                await initializeReactWallet();
-            }, 2000);
-        } else {
-            console.log('❌ useReact is false, not initializing React wallet');
+        // Initialize wallet connection when the game starts
+        if (sceneClass === Scene_Boot) {
+            console.log('⏰ Setting timeout for wallet initialization...');
+            setTimeout(() => {
+                initializeWalletConnection();
+            }, 2000); // Wait 2 seconds for the game to load
         }
+        
+        return _SceneManager_run.call(this, sceneClass);
     };
 
-    // Plugin commands
-    PluginManager.registerCommand('PrivyAGWConnect', 'connectWallet', () => {
-        connectAGW();
-    });
-
-    PluginManager.registerCommand('PrivyAGWConnect', 'disconnectWallet', () => {
-        if (useReact && reactWalletConnect) {
-            // React component handles disconnection
-            console.log('Disconnect handled by React component');
-        } else {
-            currentAccount = null;
-            isConnected = false;
-            $gameMessage.add('Wallet disconnected');
-        }
-    });
-
-    PluginManager.registerCommand('PrivyAGWConnect', 'getWalletAddress', () => {
-        const state = getWalletState();
-        if (state.isConnected) {
-            $gameMessage.add(`Wallet: ${state.address}`);
-        } else {
-            $gameMessage.add('No wallet connected');
-        }
-    });
-
-    // Make functions globally available
-    window.PrivyAGWConnect = {
-        connect: connectAGW,
-        disconnect: () => {
-            if (useReact && reactWalletConnect) {
-                // React component handles disconnection
-            } else {
-                currentAccount = null;
-                isConnected = false;
+    // Game events
+    window.$gameWallet = {
+        isConnected: () => isConnected,
+        getAccount: () => currentAccount,
+        connect: () => {
+            if (reactPrivyWallet) {
+                // The React component handles the connection
+                console.log('🔧 Connect requested');
             }
         },
-        getState: getWalletState,
-        isConnected: () => isConnected,
-        getAddress: () => currentAccount
+        disconnect: () => {
+            if (reactPrivyWallet) {
+                // The React component handles the disconnection
+                console.log('🔧 Disconnect requested');
+            }
+        }
     };
 
+    console.log('✅ PrivyAGWConnect plugin loaded successfully');
 })();
