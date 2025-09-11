@@ -196,6 +196,13 @@ class ReactWalletConnect {
     async loadPrivy() {
         if (this.isPrivyLoaded) return;
 
+        // Check if SDKs are already loaded from HTML
+        if (window.React && window.ReactDOM && (window.PrivyReactAuth || window.AbstractPrivyProvider)) {
+            console.log('✅ React and Privy SDKs already loaded from HTML');
+            this.isPrivyLoaded = true;
+            return;
+        }
+
         // Try direct SDK first
         try {
             await this.loadPrivySDK();
