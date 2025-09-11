@@ -385,15 +385,8 @@ class ReactPrivyWallet {
         const currentOrigin = window.location.origin;
         console.log('🔧 Current origin:', currentOrigin);
         
-        // Try different Privy URL formats
-        const privyUrls = [
-            `https://dashboard.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`,
-            `https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`,
-            `https://privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`
-        ];
-        
-        // Use the first URL for now
-        const privyUrl = privyUrls[0];
+        // Usa solo auth.privy.io como endpoint
+        const privyUrl = `https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`;
         console.log('🔧 Using Privy URL:', privyUrl);
         
         const popup = window.open(
@@ -461,7 +454,7 @@ class ReactPrivyWallet {
                         window.removeEventListener('message', messageListener);
                         
                         // Show user-friendly error message
-                        alert('Wallet connection failed. Please check your Privy dashboard configuration:\n\n1. Make sure your App ID is correct\n2. Add your domain to "Allowed Origins"\n3. Add your domain to "Redirect URIs"');
+                        alert('Wallet connection failed. Please check your Privy dashboard configuration:\n\n1. Make sure your App ID is correct\n2. Add tu dominio a "Allowed Origins"\n3. Add tu dominio a "Redirect URIs"');
                     }
                 } catch (e) {
                     // Cross-origin error, ignore
