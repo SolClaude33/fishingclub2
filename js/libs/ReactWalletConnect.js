@@ -98,6 +98,42 @@ class ReactWalletConnect {
     // Load Privy SDK directly
     async loadPrivySDK() {
         return new Promise((resolve, reject) => {
+            console.log('🔄 Loading Privy SDK and AGW...');
+            
+            // Load AGW React first
+            this.loadAGWReact().then(() => {
+                // Then load Privy
+                this.loadPrivyDirect().then(resolve).catch(reject);
+            }).catch(() => {
+                // If AGW fails, just load Privy
+                this.loadPrivyDirect().then(resolve).catch(reject);
+            });
+        });
+    }
+
+    // Load AGW React SDK
+    loadAGWReact() {
+        return new Promise((resolve, reject) => {
+            console.log('🔄 Loading AGW React SDK...');
+            
+            const agwScript = document.createElement('script');
+            agwScript.src = 'https://unpkg.com/@abstract-foundation/agw-react@latest/dist/index.umd.js';
+            agwScript.async = true;
+            agwScript.onload = () => {
+                console.log('✅ AGW React SDK loaded');
+                resolve();
+            };
+            agwScript.onerror = (error) => {
+                console.log('❌ Failed to load AGW React SDK:', error);
+                reject(error);
+            };
+            document.head.appendChild(agwScript);
+        });
+    }
+
+    // Load Privy directly
+    loadPrivyDirect() {
+        return new Promise((resolve, reject) => {
             console.log('🔄 Loading Privy SDK directly...');
             
             // Create Privy SDK script
@@ -329,9 +365,10 @@ class ReactWalletConnect {
             
             const useAbstractPrivyLogin = window.useAbstractPrivyLogin || (() => ({ 
                 login: () => {
-                    console.log('❌ useAbstractPrivyLogin not available, falling back to manual login');
-                    // Fallback to manual Privy login
-                    return window.login?.() || Promise.reject('No login method available');
+                    console.log('❌ useAbstractPrivyLogin not available, using manual Privy login');
+                    // Use the standard Privy login method
+                    const { login } = usePrivy();
+                    return login();
                 }, 
                 link: () => console.log('useAbstractPrivyLogin not available') 
             }));
