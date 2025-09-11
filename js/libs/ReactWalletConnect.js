@@ -259,18 +259,170 @@ class ReactWalletConnect {
                             login: () => console.log('AGW Login not implemented'),
                             logout: () => console.log('AGW Logout not implemented')
                         }));
+                        
+                        // Add useCrossAppAccounts if available
+                        if (window.useCrossAppAccounts) {
+                            console.log('✅ useCrossAppAccounts available from AGW React');
+                        } else {
+                            // Create a fallback for useCrossAppAccounts
+                            window.useCrossAppAccounts = () => ({
+                                loginWithCrossAppAccount: ({ appId }) => {
+                                    console.log('🔧 Fallback loginWithCrossAppAccount called with appId:', appId);
+                                    // Open popup to AGW login
+                                    const popup = window.open(
+                                        `https://auth.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`,
+                                        'privy-login',
+                                        'width=500,height=700,scrollbars=yes,resizable=yes'
+                                    );
+                                    
+                                    return new Promise((resolve, reject) => {
+                                        if (!popup) {
+                                            reject(new Error('Popup blocked'));
+                                            return;
+                                        }
+                                        
+                                        const messageListener = (event) => {
+                                            if (event.origin !== 'https://auth.privy.io') return;
+                                            
+                                            if (event.data.type === 'PRIVY_AUTH_SUCCESS') {
+                                                popup.close();
+                                                window.removeEventListener('message', messageListener);
+                                                resolve(event.data);
+                                            } else if (event.data.type === 'PRIVY_AUTH_ERROR') {
+                                                popup.close();
+                                                window.removeEventListener('message', messageListener);
+                                                reject(new Error(event.data.error));
+                                            }
+                                        };
+                                        
+                                        window.addEventListener('message', messageListener);
+                                        
+                                        const checkClosed = setInterval(() => {
+                                            if (popup.closed) {
+                                                clearInterval(checkClosed);
+                                                window.removeEventListener('message', messageListener);
+                                                reject(new Error('User closed popup'));
+                                            }
+                                        }, 1000);
+                                    });
+                                }
+                            });
+                        }
+                        
                         console.log('✅ AbstractPrivyProvider extracted from AGW React:', typeof window.PrivyProvider);
                         resolve();
                     } else if (window.PrivyReactAuth && window.PrivyReactAuth.PrivyProvider) {
                         // React Auth version
                         window.PrivyProvider = window.PrivyReactAuth.PrivyProvider;
                         window.usePrivy = window.PrivyReactAuth.usePrivy;
+                        
+                        // Add useCrossAppAccounts if available
+                        if (window.PrivyReactAuth.useCrossAppAccounts) {
+                            window.useCrossAppAccounts = window.PrivyReactAuth.useCrossAppAccounts;
+                            console.log('✅ useCrossAppAccounts available from PrivyReactAuth');
+                        } else {
+                            // Create a fallback for useCrossAppAccounts
+                            window.useCrossAppAccounts = () => ({
+                                loginWithCrossAppAccount: ({ appId }) => {
+                                    console.log('🔧 Fallback loginWithCrossAppAccount called with appId:', appId);
+                                    // Open popup to AGW login
+                                    const popup = window.open(
+                                        `https://auth.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`,
+                                        'privy-login',
+                                        'width=500,height=700,scrollbars=yes,resizable=yes'
+                                    );
+                                    
+                                    return new Promise((resolve, reject) => {
+                                        if (!popup) {
+                                            reject(new Error('Popup blocked'));
+                                            return;
+                                        }
+                                        
+                                        const messageListener = (event) => {
+                                            if (event.origin !== 'https://auth.privy.io') return;
+                                            
+                                            if (event.data.type === 'PRIVY_AUTH_SUCCESS') {
+                                                popup.close();
+                                                window.removeEventListener('message', messageListener);
+                                                resolve(event.data);
+                                            } else if (event.data.type === 'PRIVY_AUTH_ERROR') {
+                                                popup.close();
+                                                window.removeEventListener('message', messageListener);
+                                                reject(new Error(event.data.error));
+                                            }
+                                        };
+                                        
+                                        window.addEventListener('message', messageListener);
+                                        
+                                        const checkClosed = setInterval(() => {
+                                            if (popup.closed) {
+                                                clearInterval(checkClosed);
+                                                window.removeEventListener('message', messageListener);
+                                                reject(new Error('User closed popup'));
+                                            }
+                                        }, 1000);
+                                    });
+                                }
+                            });
+                        }
+                        
                         console.log('✅ PrivyProvider extracted from PrivyReactAuth:', typeof window.PrivyProvider);
                         resolve();
                     } else if (window.Privy && window.Privy.PrivyProvider) {
                         // Direct Privy version
                         window.PrivyProvider = window.Privy.PrivyProvider;
                         window.usePrivy = window.Privy.usePrivy;
+                        
+                        // Add useCrossAppAccounts if available
+                        if (window.Privy.useCrossAppAccounts) {
+                            window.useCrossAppAccounts = window.Privy.useCrossAppAccounts;
+                            console.log('✅ useCrossAppAccounts available from Privy');
+                        } else {
+                            // Create a fallback for useCrossAppAccounts
+                            window.useCrossAppAccounts = () => ({
+                                loginWithCrossAppAccount: ({ appId }) => {
+                                    console.log('🔧 Fallback loginWithCrossAppAccount called with appId:', appId);
+                                    // Open popup to AGW login
+                                    const popup = window.open(
+                                        `https://auth.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`,
+                                        'privy-login',
+                                        'width=500,height=700,scrollbars=yes,resizable=yes'
+                                    );
+                                    
+                                    return new Promise((resolve, reject) => {
+                                        if (!popup) {
+                                            reject(new Error('Popup blocked'));
+                                            return;
+                                        }
+                                        
+                                        const messageListener = (event) => {
+                                            if (event.origin !== 'https://auth.privy.io') return;
+                                            
+                                            if (event.data.type === 'PRIVY_AUTH_SUCCESS') {
+                                                popup.close();
+                                                window.removeEventListener('message', messageListener);
+                                                resolve(event.data);
+                                            } else if (event.data.type === 'PRIVY_AUTH_ERROR') {
+                                                popup.close();
+                                                window.removeEventListener('message', messageListener);
+                                                reject(new Error(event.data.error));
+                                            }
+                                        };
+                                        
+                                        window.addEventListener('message', messageListener);
+                                        
+                                        const checkClosed = setInterval(() => {
+                                            if (popup.closed) {
+                                                clearInterval(checkClosed);
+                                                window.removeEventListener('message', messageListener);
+                                                reject(new Error('User closed popup'));
+                                            }
+                                        }, 1000);
+                                    });
+                                }
+                            });
+                        }
+                        
                         console.log('✅ PrivyProvider extracted from Privy:', typeof window.PrivyProvider);
                         resolve();
                     } else if (window.Privy) {
@@ -368,6 +520,50 @@ class ReactWalletConnect {
             };
         };
         
+        // Add useCrossAppAccounts fallback
+        window.useCrossAppAccounts = () => ({
+            loginWithCrossAppAccount: ({ appId }) => {
+                console.log('🔧 Fallback loginWithCrossAppAccount called with appId:', appId);
+                // Open popup to AGW login
+                const popup = window.open(
+                    `https://auth.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`,
+                    'privy-login',
+                    'width=500,height=700,scrollbars=yes,resizable=yes'
+                );
+                
+                return new Promise((resolve, reject) => {
+                    if (!popup) {
+                        reject(new Error('Popup blocked'));
+                        return;
+                    }
+                    
+                    const messageListener = (event) => {
+                        if (event.origin !== 'https://auth.privy.io') return;
+                        
+                        if (event.data.type === 'PRIVY_AUTH_SUCCESS') {
+                            popup.close();
+                            window.removeEventListener('message', messageListener);
+                            resolve(event.data);
+                        } else if (event.data.type === 'PRIVY_AUTH_ERROR') {
+                            popup.close();
+                            window.removeEventListener('message', messageListener);
+                            reject(new Error(event.data.error));
+                        }
+                    };
+                    
+                    window.addEventListener('message', messageListener);
+                    
+                    const checkClosed = setInterval(() => {
+                        if (popup.closed) {
+                            clearInterval(checkClosed);
+                            window.removeEventListener('message', messageListener);
+                            reject(new Error('User closed popup'));
+                        }
+                    }, 1000);
+                });
+            }
+        });
+        
         console.log('✅ Fallback PrivyProvider created successfully');
     }
 
@@ -420,13 +616,26 @@ class ReactWalletConnect {
                 setError(null);
                 
                 try {
-                    console.log('🔧 Starting AGW login using useAbstractPrivyLogin...');
+                    console.log('🔧 Starting AGW login using loginWithCrossAppAccount...');
                     
-                    // Use the AGW login method from the hook
-                    await agwLogin();
-                    
-                    console.log('✅ AGW login initiated successfully');
-                    setIsConnecting(false);
+                    // Check if we have access to useCrossAppAccounts
+                    if (window.useCrossAppAccounts) {
+                        const { loginWithCrossAppAccount } = window.useCrossAppAccounts();
+                        console.log('🎯 Using loginWithCrossAppAccount with AGW App ID');
+                        
+                        // Use AGW App ID for cross-app login
+                        await loginWithCrossAppAccount({ appId: 'cm04asygd041fmry9zmcyn5o5' });
+                        
+                        console.log('✅ Cross-app login successful');
+                        setIsConnecting(false);
+                    } else {
+                        console.log('⚠️ useCrossAppAccounts not available, using AGW login hook');
+                        // Use the AGW login method from the hook
+                        await agwLogin();
+                        
+                        console.log('✅ AGW login initiated successfully');
+                        setIsConnecting(false);
+                    }
 
                 } catch (error) {
                     console.error('Connection error:', error);
