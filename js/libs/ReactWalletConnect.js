@@ -324,8 +324,15 @@ class ReactWalletConnect {
             const { ready, authenticated, user, logout } = usePrivy();
             
             // Check if useAbstractPrivyLogin is available
+            console.log('🔧 Checking for useAbstractPrivyLogin:', typeof window.useAbstractPrivyLogin);
+            console.log('🔧 Available AGW functions:', Object.keys(window).filter(key => key.includes('Abstract') || key.includes('AGW')));
+            
             const useAbstractPrivyLogin = window.useAbstractPrivyLogin || (() => ({ 
-                login: () => console.log('useAbstractPrivyLogin not available'), 
+                login: () => {
+                    console.log('❌ useAbstractPrivyLogin not available, falling back to manual login');
+                    // Fallback to manual Privy login
+                    return window.login?.() || Promise.reject('No login method available');
+                }, 
                 link: () => console.log('useAbstractPrivyLogin not available') 
             }));
             
@@ -413,6 +420,9 @@ class ReactWalletConnect {
         };
 
         const App = () => {
+            console.log('🔧 AbstractPrivyProvider available:', typeof AbstractPrivyProvider);
+            console.log('🔧 Using App ID:', "cmfa4s0v800s8180b9c8eiatl");
+            
             return React.createElement(AbstractPrivyProvider, { 
                 appId: "cmfa4s0v800s8180b9c8eiatl" // Your actual Privy app ID
             }, React.createElement(WalletConnectButton));
