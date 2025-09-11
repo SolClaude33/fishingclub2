@@ -36,9 +36,15 @@ class ReactPrivyWallet {
                 console.log('🔍 window.usePrivy:', typeof window.usePrivy);
                 console.log('🔍 window.useCrossAppAccounts:', typeof window.useCrossAppAccounts);
                 
-                if (window.React && window.ReactDOM && (window.PrivyReactAuth || window.PrivyProvider)) {
-                    console.log('✅ All dependencies loaded');
-                    resolve();
+                if (window.React && window.ReactDOM) {
+                    console.log('✅ React dependencies loaded');
+                    if (window.PrivyReactAuth || window.PrivyProvider) {
+                        console.log('✅ Privy dependencies loaded');
+                        resolve();
+                    } else {
+                        console.log('⚠️ Privy not loaded, creating fallback button');
+                        resolve(); // Continue with fallback
+                    }
                 } else {
                     console.log('⏳ Waiting for dependencies...');
                     setTimeout(checkDependencies, 100);
@@ -48,7 +54,8 @@ class ReactPrivyWallet {
             
             // Timeout after 10 seconds
             setTimeout(() => {
-                reject(new Error('Dependencies loading timeout'));
+                console.log('⚠️ Timeout reached, creating fallback button');
+                resolve(); // Continue with fallback instead of rejecting
             }, 10000);
         });
     }
@@ -71,7 +78,8 @@ class ReactPrivyWallet {
             usePrivy = window.usePrivy;
             useCrossAppAccounts = window.useCrossAppAccounts;
         } else {
-            console.error('❌ No Privy components found');
+            console.log('⚠️ No Privy components found, creating fallback button');
+            this.createFallbackButton(containerId);
             return;
         }
         
@@ -276,6 +284,138 @@ class ReactPrivyWallet {
             isConnected: this.isConnected,
             walletAddress: this.walletAddress
         };
+    }
+
+    // Create fallback button when Privy is not available
+    createFallbackButton(containerId) {
+        console.log('🔧 Creating fallback wallet button...');
+        
+        // Find or create container
+        let container = document.getElementById(containerId);
+        if (!container) {
+            container = document.createElement('div');
+            container.id = containerId;
+            container.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            `;
+            document.body.appendChild(container);
+        }
+
+        // Create simple HTML button
+        container.innerHTML = `
+            <div style="text-align: center;">
+                <div style="margin-bottom: 10px; font-size: 14px; color: #666;">
+                    Wallet Connection
+                </div>
+                <button id="fallback-wallet-button" style="
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                ">Connect Wallet</button>
+                <div id="wallet-status" style="
+                    margin-top: 10px;
+                    font-size: 12px;
+                    color: #666;
+                ">Not connected</div>
+            </div>
+        `;
+
+        // Add click handler
+        const button = document.getElementById('fallback-wallet-button');
+        const status = document.getElementById('wallet-status');
+        
+        button.addEventListener('click', () => {
+            if (this.isConnected) {
+                // Disconnect
+                this.isConnected = false;
+                this.walletAddress = null;
+                button.textContent = 'Connect Wallet';
+                status.textContent = 'Not connected';
+                status.style.color = '#666';
+                
+                if (this.callbacks.onDisconnect) {
+                    this.callbacks.onDisconnect();
+                }
+            } else {
+                // Connect - open Privy popup
+                this.openPrivyPopup();
+            }
+        });
+
+        console.log('✅ Fallback wallet button created');
+    }
+
+    // Open Privy popup for connection
+    openPrivyPopup() {
+        console.log('🔧 Opening Privy popup...');
+        
+        const privyUrl = `https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`;
+        
+        const popup = window.open(
+            privyUrl,
+            'privy-auth',
+            'width=500,height=600,scrollbars=yes,resizable=yes'
+        );
+
+        if (!popup) {
+            console.error('❌ Failed to open popup - popup blocked');
+            return;
+        }
+
+        // Listen for popup messages
+        const messageListener = (event) => {
+            if (event.origin !== window.location.origin) return;
+            
+            if (event.data.type === 'PRIVY_AUTH_SUCCESS') {
+                console.log('✅ Privy authentication successful');
+                this.isConnected = true;
+                this.walletAddress = event.data.address || '0x...';
+                
+                // Update UI
+                const button = document.getElementById('fallback-wallet-button');
+                const status = document.getElementById('wallet-status');
+                if (button) button.textContent = 'Disconnect Wallet';
+                if (status) {
+                    status.textContent = `Connected: ${this.walletAddress.slice(0, 6)}...${this.walletAddress.slice(-4)}`;
+                    status.style.color = '#4CAF50';
+                }
+                
+                if (this.callbacks.onConnect) {
+                    this.callbacks.onConnect(this.walletAddress, { wallet: { address: this.walletAddress } });
+                }
+                
+                popup.close();
+                window.removeEventListener('message', messageListener);
+            } else if (event.data.type === 'PRIVY_AUTH_ERROR') {
+                console.error('❌ Privy authentication failed:', event.data.error);
+                if (this.callbacks.onError) {
+                    this.callbacks.onError(new Error(event.data.error));
+                }
+                popup.close();
+                window.removeEventListener('message', messageListener);
+            }
+        };
+
+        window.addEventListener('message', messageListener);
+
+        // Check if popup was closed manually
+        const checkClosed = setInterval(() => {
+            if (popup.closed) {
+                clearInterval(checkClosed);
+                window.removeEventListener('message', messageListener);
+            }
+        }, 1000);
     }
 }
 
