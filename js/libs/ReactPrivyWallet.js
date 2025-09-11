@@ -28,7 +28,15 @@ class ReactPrivyWallet {
     async waitForDependencies() {
         return new Promise((resolve, reject) => {
             const checkDependencies = () => {
-                if (window.React && window.ReactDOM && window.PrivyReactAuth) {
+                console.log('🔍 Checking dependencies...');
+                console.log('🔍 window.React:', typeof window.React);
+                console.log('🔍 window.ReactDOM:', typeof window.ReactDOM);
+                console.log('🔍 window.PrivyReactAuth:', typeof window.PrivyReactAuth);
+                console.log('🔍 window.PrivyProvider:', typeof window.PrivyProvider);
+                console.log('🔍 window.usePrivy:', typeof window.usePrivy);
+                console.log('🔍 window.useCrossAppAccounts:', typeof window.useCrossAppAccounts);
+                
+                if (window.React && window.ReactDOM && (window.PrivyReactAuth || window.PrivyProvider)) {
                     console.log('✅ All dependencies loaded');
                     resolve();
                 } else {
@@ -50,12 +58,32 @@ class ReactPrivyWallet {
         console.log('🎨 Creating React component...');
         
         const { React, ReactDOM } = window;
-        const { PrivyProvider, usePrivy, useCrossAppAccounts } = window.PrivyReactAuth;
+        
+        // Get Privy components from the correct window object
+        let PrivyProvider, usePrivy, useCrossAppAccounts;
+        
+        if (window.PrivyReactAuth) {
+            console.log('🔧 Using PrivyReactAuth');
+            ({ PrivyProvider, usePrivy, useCrossAppAccounts } = window.PrivyReactAuth);
+        } else if (window.PrivyProvider) {
+            console.log('🔧 Using exposed PrivyProvider');
+            PrivyProvider = window.PrivyProvider;
+            usePrivy = window.usePrivy;
+            useCrossAppAccounts = window.useCrossAppAccounts;
+        } else {
+            console.error('❌ No Privy components found');
+            return;
+        }
+        
+        console.log('🔧 PrivyProvider:', typeof PrivyProvider);
+        console.log('🔧 usePrivy:', typeof usePrivy);
+        console.log('🔧 useCrossAppAccounts:', typeof useCrossAppAccounts);
         
         // Login Button Component
         const LoginButton = () => {
             const { ready, authenticated, user, logout } = usePrivy();
-            const { loginWithCrossAppAccount } = useCrossAppAccounts();
+            const crossAppAccounts = useCrossAppAccounts ? useCrossAppAccounts() : null;
+            const loginWithCrossAppAccount = crossAppAccounts ? crossAppAccounts.loginWithCrossAppAccount : null;
             const [isConnecting, setIsConnecting] = React.useState(false);
             const [error, setError] = React.useState(null);
 
@@ -67,14 +95,22 @@ class ReactPrivyWallet {
                 setError(null);
                 
                 try {
-                    console.log('🔧 Starting cross-app login with AGW...');
+                    console.log('🔧 Starting wallet connection...');
                     
-                    // Use loginWithCrossAppAccount with AGW App ID
-                    await loginWithCrossAppAccount({ 
-                        appId: 'cm04asygd041fmry9zmcyn5o5' // AGW App ID
-                    });
+                    if (loginWithCrossAppAccount) {
+                        console.log('🔧 Using cross-app login with AGW...');
+                        // Use loginWithCrossAppAccount with AGW App ID
+                        await loginWithCrossAppAccount({ 
+                            appId: 'cm04asygd041fmry9zmcyn5o5' // AGW App ID
+                        });
+                    } else {
+                        console.log('🔧 Using standard Privy login...');
+                        // Fallback to standard Privy login
+                        const { login } = usePrivy();
+                        await login();
+                    }
                     
-                    console.log('✅ Cross-app login successful');
+                    console.log('✅ Login successful');
                     setIsConnecting(false);
                     
                     // Update our state

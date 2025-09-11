@@ -19,7 +19,6 @@ const scriptUrls = [
     "js/plugins/VendingMachinePayment.js",
     "js/plugins/FishingMinigame.js",
     "js/plugins/SimpleMenu.js",
-    "js/plugins/CoinflipMinigame.js"
 ];
 const effekseerWasmUrl = "js/libs/effekseer.wasm";
 
