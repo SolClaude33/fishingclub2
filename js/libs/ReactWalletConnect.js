@@ -157,19 +157,27 @@ class ReactWalletConnect {
                         authenticated: false,
                         user: null,
                         login: () => {
-                            console.log('🔧 Direct Privy login called');
-                            // Use Privy SDK directly
-                            if (window.Privy) {
-                                window.Privy.login();
-                            } else {
-                                alert('Privy SDK not available');
+                            console.log('🔧 Direct Privy login called - opening popup');
+                            // Open Privy login popup directly
+                            const popup = window.open(
+                                'https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=' + 
+                                encodeURIComponent(window.location.origin) + 
+                                '&response_type=code&scope=openid',
+                                'privy-login',
+                                'width=500,height=700,scrollbars=yes,resizable=yes'
+                            );
+                            
+                            if (!popup) {
+                                console.log('🔧 Popup blocked, redirecting instead');
+                                window.location.href = 'https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=' + 
+                                    encodeURIComponent(window.location.origin) + 
+                                    '&response_type=code&scope=openid';
                             }
                         },
                         logout: () => {
                             console.log('🔧 Direct Privy logout called');
-                            if (window.Privy) {
-                                window.Privy.logout();
-                            }
+                            // Clear any stored auth data
+                            localStorage.removeItem('privy-auth');
                         }
                     };
                 };
@@ -333,8 +341,22 @@ class ReactWalletConnect {
                 authenticated: false,
                 user: null,
                 login: () => {
-                    console.log('🔧 Fallback login called with App ID');
-                    // This will be handled by the button click
+                    console.log('🔧 Fallback login called - opening popup');
+                    // Open Privy login popup directly
+                    const popup = window.open(
+                        'https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=' + 
+                        encodeURIComponent(window.location.origin) + 
+                        '&response_type=code&scope=openid',
+                        'privy-login',
+                        'width=500,height=700,scrollbars=yes,resizable=yes'
+                    );
+                    
+                    if (!popup) {
+                        console.log('🔧 Popup blocked, redirecting instead');
+                        window.location.href = 'https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=' + 
+                            encodeURIComponent(window.location.origin) + 
+                            '&response_type=code&scope=openid';
+                    }
                 },
                 logout: () => {
                     console.log('🔧 Fallback logout called');
