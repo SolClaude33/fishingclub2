@@ -342,9 +342,13 @@ class ReactWalletConnect {
                 user: null,
                 login: () => {
                     console.log('🔧 Fallback login called - opening popup');
-                    // Open Privy login popup directly
+                    // Try AGW App ID first (already configured)
+                    const agwAppId = 'cm04asygd041fmry9zmcyn5o5';
+                    const yourAppId = 'cmfa4s0v800s8180b9c8eiatl';
+                    
+                    // Use AGW App ID which is already configured
                     const popup = window.open(
-                        'https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=' + 
+                        'https://auth.privy.io/oauth/authorize?client_id=' + agwAppId + '&redirect_uri=' + 
                         encodeURIComponent(window.location.origin) + 
                         '&response_type=code&scope=openid',
                         'privy-login',
