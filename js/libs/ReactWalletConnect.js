@@ -344,17 +344,17 @@ class ReactWalletConnect {
                 try {
                     console.log('🔧 Starting AGW cross-app login...');
                     
-                    // Try different AGW connection methods
+                    // Use your own Privy app ID (not AGW's)
                     const requesterOrigin = window.location.origin;
                     
-                    // Method 1: Try the standard Privy auth URL with AGW app ID
+                    // Use your actual Privy app ID
                     let privyUrl = `https://auth.privy.io/oauth/authorize?` +
-                        `client_id=cm04asygd041fmry9zmcyn5o5&` +
+                        `client_id=cmfa4s0v800s8180b9c8eiatl&` +
                         `redirect_uri=${encodeURIComponent(requesterOrigin)}&` +
                         `response_type=code&scope=openid&` +
                         `timestamp=${Date.now()}`;
 
-                    console.log('🔧 Trying Method 1 - Standard Privy Auth:', privyUrl);
+                    console.log('🔧 Using YOUR Privy App ID:', privyUrl);
                     console.log('🔧 Requester origin:', requesterOrigin);
 
                     // Open in popup
