@@ -199,6 +199,38 @@ class ReactWalletConnect {
         // Check if SDKs are already loaded from HTML
         if (window.React && window.ReactDOM && (window.PrivyReactAuth || window.AbstractPrivyProvider)) {
             console.log('✅ React and Privy SDKs already loaded from HTML');
+            
+            // Extract AGW components if available
+            if (window.AbstractPrivyProvider) {
+                console.log('✅ AbstractPrivyProvider found in window');
+                window.PrivyProvider = window.AbstractPrivyProvider;
+                
+                // Try to extract useAbstractPrivyLogin
+                if (window.useAbstractPrivyLogin) {
+                    console.log('✅ useAbstractPrivyLogin found in window');
+                    window.usePrivy = window.useAbstractPrivyLogin;
+                } else {
+                    console.log('⚠️ useAbstractPrivyLogin not found, creating fallback');
+                    window.usePrivy = () => ({
+                        ready: true,
+                        authenticated: false,
+                        user: null,
+                        login: () => console.log('AGW Login not implemented'),
+                        logout: () => console.log('AGW Logout not implemented')
+                    });
+                }
+            } else if (window.PrivyReactAuth) {
+                console.log('✅ PrivyReactAuth found in window');
+                window.PrivyProvider = window.PrivyReactAuth.PrivyProvider;
+                window.usePrivy = window.PrivyReactAuth.usePrivy;
+                
+                // Try to extract useCrossAppAccounts
+                if (window.PrivyReactAuth.useCrossAppAccounts) {
+                    window.useCrossAppAccounts = window.PrivyReactAuth.useCrossAppAccounts;
+                    console.log('✅ useCrossAppAccounts found in PrivyReactAuth');
+                }
+            }
+            
             this.isPrivyLoaded = true;
             return;
         }

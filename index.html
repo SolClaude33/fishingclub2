@@ -401,6 +401,43 @@ image.png<!DOCTYPE html>
     <script src="https://unpkg.com/@privy-io/react-auth@2.24.0/dist/index.umd.js"></script>
     <script src="https://unpkg.com/@abstract-foundation/agw-react@latest/dist/index.umd.js"></script>
     
+    <!-- Expose AGW hooks after SDKs are loaded -->
+    <script>
+        // Wait for SDKs to load and expose AGW hooks
+        window.addEventListener('load', function() {
+            console.log('🔍 Checking for loaded SDKs...');
+            console.log('🔍 window.React:', typeof window.React);
+            console.log('🔍 window.ReactDOM:', typeof window.ReactDOM);
+            console.log('🔍 window.PrivyReactAuth:', typeof window.PrivyReactAuth);
+            console.log('🔍 window.AbstractPrivyProvider:', typeof window.AbstractPrivyProvider);
+            console.log('🔍 window.useAbstractPrivyLogin:', typeof window.useAbstractPrivyLogin);
+            
+            // Expose AGW components if available
+            if (window.AbstractPrivyProvider) {
+                console.log('✅ Exposing AbstractPrivyProvider');
+                window.PrivyProvider = window.AbstractPrivyProvider;
+                
+                if (window.useAbstractPrivyLogin) {
+                    console.log('✅ Exposing useAbstractPrivyLogin');
+                    window.usePrivy = window.useAbstractPrivyLogin;
+                }
+            } else if (window.PrivyReactAuth) {
+                console.log('✅ Exposing PrivyReactAuth components');
+                window.PrivyProvider = window.PrivyReactAuth.PrivyProvider;
+                window.usePrivy = window.PrivyReactAuth.usePrivy;
+                
+                if (window.PrivyReactAuth.useCrossAppAccounts) {
+                    window.useCrossAppAccounts = window.PrivyReactAuth.useCrossAppAccounts;
+                    console.log('✅ Exposing useCrossAppAccounts');
+                }
+            }
+            
+            console.log('🔍 Final state - window.PrivyProvider:', typeof window.PrivyProvider);
+            console.log('🔍 Final state - window.usePrivy:', typeof window.usePrivy);
+            console.log('🔍 Final state - window.useCrossAppAccounts:', typeof window.useCrossAppAccounts);
+        });
+    </script>
+    
     <!-- AGW + RainbowKit Configuration -->
     <script src="js/libs/agw-rainbowkit-config.js"></script>
     
