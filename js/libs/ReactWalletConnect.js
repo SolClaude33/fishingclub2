@@ -321,7 +321,15 @@ class ReactWalletConnect {
 
         const WalletConnectButton = () => {
             console.log('🎨 WalletConnectButton component rendering...');
-            const { ready, authenticated, user, login, logout } = usePrivy();
+            const { ready, authenticated, user, logout } = usePrivy();
+            
+            // Check if useAbstractPrivyLogin is available
+            const useAbstractPrivyLogin = window.useAbstractPrivyLogin || (() => ({ 
+                login: () => console.log('useAbstractPrivyLogin not available'), 
+                link: () => console.log('useAbstractPrivyLogin not available') 
+            }));
+            
+            const { login: agwLogin, link: agwLink } = useAbstractPrivyLogin();
             const [isConnecting, setIsConnecting] = useState(false);
             const [error, setError] = useState(null);
             
@@ -342,67 +350,13 @@ class ReactWalletConnect {
                 setError(null);
                 
                 try {
-                    console.log('🔧 Starting AGW cross-app login...');
+                    console.log('🔧 Starting AGW login using useAbstractPrivyLogin...');
                     
-                    // Use the correct Privy URL format
-                    const requesterOrigin = window.location.origin;
+                    // Use the AGW login method from the hook
+                    await agwLogin();
                     
-                    // Try the dashboard URL instead of auth.privy.io
-                    let privyUrl = `https://dashboard.privy.io/oauth/authorize?` +
-                        `client_id=cmfa4s0v800s8180b9c8eiatl&` +
-                        `redirect_uri=${encodeURIComponent(requesterOrigin)}&` +
-                        `response_type=code&scope=openid&` +
-                        `timestamp=${Date.now()}`;
-
-                    console.log('🔧 Using Dashboard Privy URL:', privyUrl);
-                    console.log('🔧 Requester origin:', requesterOrigin);
-
-                    // Open in popup
-                    const popup = window.open(
-                        privyUrl,
-                        'privy-connect',
-                        'width=500,height=700,scrollbars=yes,resizable=yes'
-                    );
-
-                    if (!popup) {
-                        console.log('🔧 Popup blocked, redirecting instead');
-                        window.location.href = privyUrl;
-                        return;
-                    }
-
-                    console.log('✅ AGW cross-app popup opened successfully');
-
-                    // Listen for messages from Privy
-                    const messageHandler = (event) => {
-                        if (event.origin !== 'https://privy.abs.xyz' && event.origin !== 'https://dashboard.privy.io') {
-                            return;
-                        }
-
-                        if (event.data.type === 'PRIVY_CONNECT_SUCCESS' || event.data.type === 'CONNECT_SUCCESS' || event.data.type === 'WALLET_CONNECTED') {
-                            const address = event.data.account || event.data.walletAddress || event.data.address;
-                            this.walletAddress = address;
-                            this.isConnected = true;
-                            
-                            if (this.callbacks.onConnect) {
-                                this.callbacks.onConnect(address, event.data.user);
-                            }
-                            
-                            popup.close();
-                            window.removeEventListener('message', messageHandler);
-                            setIsConnecting(false);
-                        }
-                    };
-
-                    window.addEventListener('message', messageHandler);
-
-                    // Check if popup is closed
-                    const checkClosed = setInterval(() => {
-                        if (popup.closed) {
-                            clearInterval(checkClosed);
-                            window.removeEventListener('message', messageHandler);
-                            setIsConnecting(false);
-                        }
-                    }, 1000);
+                    console.log('✅ AGW login initiated successfully');
+                    setIsConnecting(false);
 
                 } catch (error) {
                     console.error('Connection error:', error);
@@ -460,8 +414,7 @@ class ReactWalletConnect {
 
         const App = () => {
             return React.createElement(AbstractPrivyProvider, { 
-                appId: "cmfa4s0v800s8180b9c8eiatl" // Your actual Privy app ID (requester)
-                // AbstractPrivyProvider handles the Privy configuration internally
+                appId: "cmfa4s0v800s8180b9c8eiatl" // Your actual Privy app ID
             }, React.createElement(WalletConnectButton));
         };
 
