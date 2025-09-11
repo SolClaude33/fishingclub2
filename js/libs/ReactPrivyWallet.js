@@ -322,18 +322,35 @@ class ReactPrivyWallet {
                     border-radius: 4px;
                     cursor: pointer;
                     font-size: 14px;
+                    margin-right: 5px;
                 ">Connect Wallet</button>
+                <button id="test-config-button" style="
+                    background: #2196F3;
+                    color: white;
+                    border: none;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                ">Test Config</button>
                 <div id="wallet-status" style="
                     margin-top: 10px;
                     font-size: 12px;
                     color: #666;
                 ">Not connected</div>
+                <div id="config-status" style="
+                    margin-top: 5px;
+                    font-size: 10px;
+                    color: #999;
+                "></div>
             </div>
         `;
 
-        // Add click handler
+        // Add click handlers
         const button = document.getElementById('fallback-wallet-button');
         const status = document.getElementById('wallet-status');
+        const configButton = document.getElementById('test-config-button');
+        const configStatus = document.getElementById('config-status');
         
         button.addEventListener('click', () => {
             if (this.isConnected) {
@@ -353,6 +370,10 @@ class ReactPrivyWallet {
             }
         });
 
+        configButton.addEventListener('click', () => {
+            this.testPrivyConfiguration(configStatus);
+        });
+
         console.log('✅ Fallback wallet button created');
     }
 
@@ -360,7 +381,20 @@ class ReactPrivyWallet {
     openPrivyPopup() {
         console.log('🔧 Opening Privy popup...');
         
-        const privyUrl = `https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`;
+        // Get current origin
+        const currentOrigin = window.location.origin;
+        console.log('🔧 Current origin:', currentOrigin);
+        
+        // Try different Privy URL formats
+        const privyUrls = [
+            `https://dashboard.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`,
+            `https://auth.privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`,
+            `https://privy.io/oauth/authorize?client_id=cmfa4s0v800s8180b9c8eiatl&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`
+        ];
+        
+        // Use the first URL for now
+        const privyUrl = privyUrls[0];
+        console.log('🔧 Using Privy URL:', privyUrl);
         
         const popup = window.open(
             privyUrl,
@@ -370,6 +404,7 @@ class ReactPrivyWallet {
 
         if (!popup) {
             console.error('❌ Failed to open popup - popup blocked');
+            alert('Please allow popups for this site to connect your wallet');
             return;
         }
 
@@ -407,6 +442,35 @@ class ReactPrivyWallet {
             }
         };
 
+        // Check for popup errors
+        const checkPopupError = setInterval(() => {
+            try {
+                if (popup.closed) {
+                    clearInterval(checkPopupError);
+                    window.removeEventListener('message', messageListener);
+                    return;
+                }
+                
+                // Check if popup has navigated to an error page
+                try {
+                    const popupUrl = popup.location.href;
+                    if (popupUrl.includes('error') || popupUrl.includes('something-went-wrong')) {
+                        console.error('❌ Popup shows error page');
+                        popup.close();
+                        clearInterval(checkPopupError);
+                        window.removeEventListener('message', messageListener);
+                        
+                        // Show user-friendly error message
+                        alert('Wallet connection failed. Please check your Privy dashboard configuration:\n\n1. Make sure your App ID is correct\n2. Add your domain to "Allowed Origins"\n3. Add your domain to "Redirect URIs"');
+                    }
+                } catch (e) {
+                    // Cross-origin error, ignore
+                }
+            } catch (e) {
+                // Popup might be closed
+            }
+        }, 1000);
+
         window.addEventListener('message', messageListener);
 
         // Check if popup was closed manually
@@ -416,6 +480,75 @@ class ReactPrivyWallet {
                 window.removeEventListener('message', messageListener);
             }
         }, 1000);
+    }
+
+    // Test Privy configuration
+    testPrivyConfiguration(configStatusElement) {
+        console.log('🔧 Testing Privy configuration...');
+        
+        if (configStatusElement) {
+            configStatusElement.textContent = 'Testing configuration...';
+            configStatusElement.style.color = '#2196F3';
+        }
+
+        const currentOrigin = window.location.origin;
+        const appId = 'cmfa4s0v800s8180b9c8eiatl';
+        
+        console.log('🔧 Current origin:', currentOrigin);
+        console.log('🔧 App ID:', appId);
+        
+        // Test different Privy endpoints
+        const testUrls = [
+            `https://dashboard.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`,
+            `https://auth.privy.io/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(currentOrigin)}&response_type=code&scope=openid`
+        ];
+
+        let testIndex = 0;
+        const testNextUrl = () => {
+            if (testIndex >= testUrls.length) {
+                if (configStatusElement) {
+                    configStatusElement.textContent = 'All tests failed - check Privy dashboard';
+                    configStatusElement.style.color = '#f44336';
+                }
+                return;
+            }
+
+            const testUrl = testUrls[testIndex];
+            console.log(`🔧 Testing URL ${testIndex + 1}:`, testUrl);
+            
+            // Create a hidden iframe to test the URL
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = testUrl;
+            
+            iframe.onload = () => {
+                console.log(`✅ URL ${testIndex + 1} loaded successfully`);
+                if (configStatusElement) {
+                    configStatusElement.textContent = `URL ${testIndex + 1} works - try connecting`;
+                    configStatusElement.style.color = '#4CAF50';
+                }
+                document.body.removeChild(iframe);
+            };
+            
+            iframe.onerror = () => {
+                console.log(`❌ URL ${testIndex + 1} failed`);
+                testIndex++;
+                testNextUrl();
+            };
+            
+            document.body.appendChild(iframe);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                if (iframe.parentNode) {
+                    document.body.removeChild(iframe);
+                }
+                testIndex++;
+                testNextUrl();
+            }, 5000);
+        };
+
+        testNextUrl();
     }
 }
 
