@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="viewport" content="user-scalable=no">
+        <link rel="icon" href="img/favicon.png" type="image/png">
+        <link rel="apple-touch-icon" href="img/favicon.png">
+        <link rel="stylesheet" type="text/css" href="css/game.css">
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+        <title>Penguin Fishing Club</title>
+        
+        <!-- Abstract Global Wallet via Privy -->
+        <script src="https://sdk.privy.io/privy-js.js"></script>
+        
+        <style>
+            #muteButton {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                background: rgba(0, 0, 0, 0.7);
+                border: 2px solid #fff;
+                border-radius: 50%;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            }
+            
+            #muteButton:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            #muteButton.muted {
+                background: rgba(255, 0, 0, 0.7);
+            }
+
+            #toggleUIButton {
+                position: fixed;
+                bottom: 20px;
+                right: 80px; /* placed left of mute button with small gap */
+                width: 50px;
+                height: 50px;
+                background: rgba(0, 0, 0, 0.7);
+                border: 2px solid #fff;
+                border-radius: 50%;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            }
+            
+            #toggleUIButton:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            #toggleUIButton.hidden {
+                background: rgba(255, 165, 0, 0.7);
+            }
+            
+            #eventsButton {
+                position: fixed;
+                bottom: 20px;
+                right: 140px; /* placed left of toggle UI button */
+                width: 50px;
+                height: 50px;
+                background: rgba(0, 0, 0, 0.7);
+                border: 2px solid #fff;
+                border-radius: 50%;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            }
+            
+            #eventsButton:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            #eventsButton.active {
+                background: rgba(0, 255, 0, 0.7);
+            }
+            
+            #skinButton {
+                position: fixed;
+                bottom: 20px;
+                right: 200px; /* placed left of events button */
+                width: 50px;
+                height: 50px;
+                background: rgba(0, 0, 0, 0.7);
+                border: 2px solid #fff;
+                border-radius: 50%;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            }
+            
+            #skinButton:hover {
+                background: rgba(255, 165, 0, 0.7);
+            }
+            
+            .events-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 40000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .events-container {
+                background: linear-gradient(135deg, #F5F5DC 0%, #F0E68C 50%, #F5F5DC 100%);
+                border: 3px solid #8B4513;
+                border-radius: 8px;
+                padding: 30px;
+                max-width: 500px;
+                width: 90%;
+                color: #2F4F2F;
+                font-family: Arial, sans-serif;
+                box-shadow: 
+                    0 6px 0 #8B4513,
+                    0 4px 8px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.4);
+            }
+            
+            .events-title {
+                text-align: center;
+                margin-bottom: 30px;
+                color: #8B4513;
+                font-size: 24px;
+                font-weight: bold;
+                text-shadow: 1px 1px 0px #F5DEB3;
+                border-bottom: 3px solid #8B4513;
+                padding-bottom: 10px;
+            }
+            
+            .event-button {
+                background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+                color: white;
+                border: 2px solid #654321;
+                padding: 15px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                margin: 10px 0;
+                width: 100%;
+                box-shadow: 
+                    0 3px 0 #654321,
+                    0 2px 4px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.2);
+                transition: all 0.2s ease;
+            }
+            
+            .event-button:hover {
+                background: linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%);
+                transform: translateY(-2px);
+                box-shadow: 
+                    0 5px 0 #654321,
+                    0 3px 6px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+            }
+            
+            .event-button:active {
+                transform: translateY(0);
+                box-shadow: 
+                    0 2px 0 #654321,
+                    0 1px 3px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.2);
+            }
+            
+            .close-button {
+                background: linear-gradient(135deg, #DC143C 0%, #FF6347 50%, #DC143C 100%);
+                color: white;
+                border: 2px solid #B22222;
+                padding: 10px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 20px;
+                width: 100%;
+                box-shadow: 
+                    0 3px 0 #B22222,
+                    0 2px 4px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.2);
+                transition: all 0.2s ease;
+            }
+            
+            .close-button:hover {
+                background: linear-gradient(135deg, #FF6347 0%, #FF7F50 50%, #FF6347 100%);
+                transform: translateY(-2px);
+                box-shadow: 
+                    0 5px 0 #B22222,
+                    0 3px 6px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+            }
+            
+            .message-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 50000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .message-container {
+                background: linear-gradient(135deg, #F5F5DC 0%, #F0E68C 50%, #F5F5DC 100%);
+                border: 3px solid #8B4513;
+                border-radius: 8px;
+                padding: 30px;
+                max-width: 400px;
+                width: 90%;
+                color: #2F4F2F;
+                font-family: Arial, sans-serif;
+                text-align: center;
+                box-shadow: 
+                    0 6px 0 #8B4513,
+                    0 4px 8px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.4);
+            }
+            
+            .message-title {
+                color: #8B4513;
+                margin: 0 0 20px 0;
+                font-size: 20px;
+                font-weight: bold;
+                text-shadow: 1px 1px 0px #F5DEB3;
+                border-bottom: 2px solid #8B4513;
+                padding-bottom: 10px;
+            }
+            
+            .message-text {
+                margin: 0 0 25px 0;
+                font-size: 16px;
+                line-height: 1.5;
+                color: #2F4F2F;
+                font-weight: bold;
+            }
+            
+            .ok-button {
+                background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+                color: white;
+                border: 2px solid #654321;
+                padding: 12px 25px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                box-shadow: 
+                    0 3px 0 #654321,
+                    0 2px 4px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.2);
+                transition: all 0.2s ease;
+            }
+            
+            .ok-button:hover {
+                background: linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%);
+                transform: translateY(-2px);
+                box-shadow: 
+                    0 5px 0 #654321,
+                    0 3px 6px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+            }
+			            #versionLabel {
+				position: fixed;
+				bottom: 6px;
+				left: 6px;
+				color: #fff;
+				font-family: 'Press Start 2P', monospace;
+				font-size: 12px;
+				letter-spacing: 1px;
+				text-shadow: 0 1px 0 #000;
+				z-index: 9997;
+				pointer-events: none;
+			}
+			
+			.skin-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 40000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .skin-container {
+                background: linear-gradient(135deg, #F5F5DC 0%, #F0E68C 50%, #F5F5DC 100%);
+                border: 3px solid #8B4513;
+                border-radius: 8px;
+                padding: 20px;
+                max-width: 400px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                color: #2F4F2F;
+                font-family: Arial, sans-serif;
+                box-shadow: 
+                    0 6px 0 #8B4513,
+                    0 4px 8px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.4);
+            }
+            
+            .skin-title {
+                text-align: center;
+                margin-bottom: 30px;
+                color: #8B4513;
+                font-size: 24px;
+                font-weight: bold;
+                text-shadow: 1px 1px 0px #F5DEB3;
+                border-bottom: 3px solid #8B4513;
+                padding-bottom: 10px;
+            }
+            
+            .skin-option {
+                background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+                color: white;
+                border: 2px solid #654321;
+                padding: 12px 15px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                margin: 8px 0;
+                width: 100%;
+                box-sizing: border-box;
+                box-shadow: 
+                    0 3px 0 #654321,
+                    0 2px 4px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.2);
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            
+            .skin-option:hover {
+                background: linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%);
+                transform: translateY(-2px);
+                box-shadow: 
+                    0 5px 0 #654321,
+                    0 3px 6px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+            }
+            
+            .skin-option.selected {
+                background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+                border-color: #654321;
+                transform: scale(0.95);
+                box-shadow: 
+                    0 2px 0 #654321,
+                    0 1px 3px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+                transition: all 0.1s ease;
+            }
+            
+            .skin-option.selected:hover {
+                background: linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%);
+                transform: scale(0.95) translateY(-2px);
+                box-shadow: 
+                    0 4px 0 #654321,
+                    0 2px 4px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+            }
+              
+              .skin-category {
+                  margin-bottom: 20px;
+                  width: 48%;
+                  display: inline-block;
+                  vertical-align: top;
+              }
+              
+              .skin-category:first-child {
+                  margin-right: 4%;
+              }
+              
+              .category-title {
+                  color: #8B4513;
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 10px;
+                  text-align: center;
+                  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+                  border-bottom: 2px solid #654321;
+                  padding-bottom: 5px;
+              }
+              
+              .skin-preview {
+                width: 48px;
+                height: 48px;
+                border: 2px solid #654321;
+                border-radius: 4px;
+                background: #F5DEB3;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                color: #8B4513;
+                flex-shrink: 0;
+            }
+            
+            .skin-preview img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                border-radius: 2px;
+            }
+            
+            .close-skin-button {
+                background: linear-gradient(135deg, #DC143C 0%, #FF6347 50%, #DC143C 100%);
+                color: white;
+                border: 2px solid #B22222;
+                padding: 10px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 20px;
+                width: 100%;
+                box-shadow: 
+                    0 3px 0 #B22222,
+                    0 2px 4px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.2);
+                transition: all 0.2s ease;
+            }
+            
+            .close-skin-button:hover {
+                background: linear-gradient(135deg, #FF6347 0%, #FF7F50 50%, #FF6347 100%);
+                transform: translateY(-2px);
+                box-shadow: 
+                    0 5px 0 #B22222,
+                    0 3px 6px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+            }
+        </style>
+        
+        <!-- Firebase SDK -->
+        <script type="module">
+            import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+            import { getDatabase, ref, set, get, onValue, push, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+            
+            // Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyA6z1rGuUrq0IDsZljrQ-nKa01p2u8xK7U",
+                authDomain: "fishing-leaderboard-28549.firebaseapp.com",
+                databaseURL: "https://fishing-leaderboard-28549-default-rtdb.firebaseio.com",
+                projectId: "fishing-leaderboard-28549",
+                storageBucket: "fishing-leaderboard-28549.firebasestorage.app",
+                messagingSenderId: "999221396667",
+                appId: "1:999221396667:web:b8ad228e70462ac2cf559e",
+                measurementId: "G-TD4LS74MKN"
+            };
+            
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const database = getDatabase(app);
+            
+            // Make Firebase available globally
+            window.firebaseApp = app;
+            window.firebaseDatabase = database;
+            window.firebaseRef = ref;
+            window.firebaseSet = set;
+            window.firebaseGet = get;
+            window.firebaseOnValue = onValue;
+            window.firebasePush = push;
+            window.firebaseOrderByChild = orderByChild;
+            window.firebaseLimitToLast = limitToLast;
+        </script>
+        
+        <script>
+            // Audio mute functionality
+            let isMuted = false;
+            let savedVolumes = {
+                bgm: 100,
+                bgs: 100,
+                me: 100,
+                se: 100
+            };
+            
+            function toggleMute() {
+                const button = document.getElementById('muteButton');
+                
+                if (!isMuted) {
+                    // Save current volumes and mute
+                    if (window.ConfigManager) {
+                        savedVolumes.bgm = window.ConfigManager.bgmVolume;
+                        savedVolumes.bgs = window.ConfigManager.bgsVolume;
+                        savedVolumes.me = window.ConfigManager.meVolume;
+                        savedVolumes.se = window.ConfigManager.seVolume;
+                        
+                        window.ConfigManager.bgmVolume = 0;
+                        window.ConfigManager.bgsVolume = 0;
+                        window.ConfigManager.meVolume = 0;
+                        window.ConfigManager.seVolume = 0;
+                    }
+                    
+                    if (window.AudioManager) {
+                        window.AudioManager.bgmVolume = 0;
+                        window.AudioManager.bgsVolume = 0;
+                        window.AudioManager.meVolume = 0;
+                        window.AudioManager.seVolume = 0;
+                    }
+                    
+                    button.textContent = '🔇';
+                    button.classList.add('muted');
+                    isMuted = true;
+                } else {
+                    // Restore saved volumes
+                    if (window.ConfigManager) {
+                        window.ConfigManager.bgmVolume = savedVolumes.bgm;
+                        window.ConfigManager.bgsVolume = savedVolumes.bgs;
+                        window.ConfigManager.meVolume = savedVolumes.me;
+                        window.ConfigManager.seVolume = savedVolumes.se;
+                    }
+                    
+                    if (window.AudioManager) {
+                        window.AudioManager.bgmVolume = savedVolumes.bgm;
+                        window.AudioManager.bgsVolume = savedVolumes.bgs;
+                        window.AudioManager.meVolume = savedVolumes.me;
+                        window.AudioManager.seVolume = savedVolumes.se;
+                    }
+                    
+                    button.textContent = '🔊';
+                    button.classList.remove('muted');
+                    isMuted = false;
+                }
+                
+                // Save mute state to localStorage
+                localStorage.setItem('fishingGameMuted', isMuted);
+            }
+            
+            // Toggle UI visibility function
+            function toggleUI() {
+                const button = document.getElementById('toggleUIButton');
+                const leaderboard = document.getElementById('leaderboard');
+                const fishCounter = document.getElementById('fish-counter');
+                
+                if (leaderboard && fishCounter) {
+                    const isHidden = leaderboard.style.display === 'none';
+                    
+                    if (isHidden) {
+                        // Show UI
+                        leaderboard.style.display = 'block';
+                        fishCounter.style.display = 'block';
+                        button.textContent = '👁️';
+                        button.classList.remove('hidden');
+                        button.title = 'Hide UI';
+                    } else {
+                        // Hide UI
+                        leaderboard.style.display = 'none';
+                        fishCounter.style.display = 'none';
+                        button.textContent = '👁️‍🗨️';
+                        button.classList.add('hidden');
+                        button.title = 'Show UI';
+                    }
+                    
+                    // Save state to localStorage
+                    localStorage.setItem('fishingGameUIHidden', !isHidden);
+                }
+            }
+
+            // Initialize mute state on page load
+            window.addEventListener('load', function() {
+                const savedMuteState = localStorage.getItem('fishingGameMuted');
+                if (savedMuteState === 'true') {
+                    // Wait a bit for the game to initialize, then apply mute
+                    setTimeout(() => {
+                        toggleMute();
+                    }, 1000);
+                }
+                
+                // Initialize UI state
+                const savedUIState = localStorage.getItem('fishingGameUIHidden');
+                if (savedUIState === 'true') {
+                    // Wait a bit for the game to initialize, then hide UI
+                    setTimeout(() => {
+                        toggleUI();
+                    }, 1500);
+                }
+            });
+            
+            // Event registration functions
+            function showEvents() {
+                console.log('Opening events modal...');
+                
+                // Create modal
+                const modal = document.createElement('div');
+                modal.className = 'events-modal';
+                modal.innerHTML = `
+                    <div class="events-container">
+                        <h2 class="events-title">Fishing Events</h2>
+                        <button class="event-button" onclick="registerForEvent('fishing_tournament', 'Fishing Tournament')">
+                            🎣 Fishing Tournament
+                        </button>
+                        <button class="event-button" onclick="registerForEvent('community_challenge', 'Community Challenge')">
+                            🏆 Community Challenge
+                        </button>
+                        <button class="event-button" onclick="showAllParticipants()" style="background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 50%, #9C27B0 100%); border-color: #7B1FA2;">
+                            👥 Show Participants
+                        </button>
+                        <button class="close-button" onclick="closeEvents()">
+                            Close
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeEvents();
+                    }
+                });
+                
+                // Close on ESC key
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') {
+                        closeEvents();
+                        document.removeEventListener('keydown', handleKeyPress);
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
+            }
+            
+            function closeEvents() {
+                const modal = document.querySelector('.events-modal');
+                if (modal) {
+                    document.body.removeChild(modal);
+                }
+            }
+            
+            function showAllParticipants() {
+                console.log('Showing all participants modal');
+                
+                // Close the events modal first
+                closeEvents();
+                
+                // Create modal overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'events-modal';
+                overlay.innerHTML = `
+                    <div class="events-container" style="max-width: 800px; max-height: 80%; overflow-y: auto;">
+                        <h2 class="events-title">Event Participants</h2>
+                        
+                        <!-- Tabs -->
+                        <div style="display: flex; margin-bottom: 20px; border-bottom: 2px solid #8B4513;">
+                            <button id="fishing-tab" class="event-button" style="flex: 1; margin: 0 5px 0 0; background: linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%); border-bottom: 3px solid #654321;">
+                                🎣 Fishing Tournament
+                            </button>
+                            <button id="challenge-tab" class="event-button" style="flex: 1; margin: 0 0 0 5px; background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%); border-bottom: 3px solid transparent;">
+                                🏆 Community Challenge
+                            </button>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div id="participants-content" style="min-height: 400px; max-height: 500px; overflow-y: auto;">
+                            <div style="text-align: center; padding: 40px;">
+                                <p style="color: #8B4513; font-size: 18px; font-weight: bold;">Loading participants...</p>
+                            </div>
+                        </div>
+                        
+                        <button class="close-button" onclick="closeAllParticipants()">
+                            Close
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(overlay);
+
+                // Tab click handlers
+                const fishingTab = document.getElementById('fishing-tab');
+                const challengeTab = document.getElementById('challenge-tab');
+                const content = document.getElementById('participants-content');
+
+                fishingTab.addEventListener('click', () => {
+                    // Update active tab
+                    fishingTab.style.background = 'linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%)';
+                    fishingTab.style.borderBottomColor = '#654321';
+                    challengeTab.style.background = 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%)';
+                    challengeTab.style.borderBottomColor = 'transparent';
+                    
+                    loadParticipantsForEvent('fishing_tournament', 'Fishing Tournament', content);
+                });
+
+                challengeTab.addEventListener('click', () => {
+                    // Update active tab
+                    challengeTab.style.background = 'linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%)';
+                    challengeTab.style.borderBottomColor = '#654321';
+                    fishingTab.style.background = 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%)';
+                    fishingTab.style.borderBottomColor = 'transparent';
+                    
+                    loadParticipantsForEvent('community_challenge', 'Community Challenge', content);
+                });
+
+                // Load first tab by default
+                loadParticipantsForEvent('fishing_tournament', 'Fishing Tournament', content);
+
+                // Close functionality
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        closeAllParticipants();
+                    }
+                });
+
+                // Close with ESC key
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') {
+                        closeAllParticipants();
+                        document.removeEventListener('keydown', handleKeyPress);
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
+            }
+            
+            function closeAllParticipants() {
+                const modal = document.querySelector('.events-modal');
+                if (modal) {
+                    document.body.removeChild(modal);
+                }
+            }
+            
+            function registerForEvent(eventId, eventName) {
+                console.log('Attempting to register for event:', eventId, eventName);
+                
+                // Get wallet address
+                let walletAddress = null;
+                if (window.getPlayerWallet) {
+                    walletAddress = window.getPlayerWallet();
+                }
+                
+                console.log('Wallet address:', walletAddress);
+                
+                if (!walletAddress) {
+                    showMessage('Please connect your wallet first!');
+                    return;
+                }
+
+                if (!window.firebaseDatabase) {
+                    showMessage('Database not available. Please try again later.');
+                    return;
+                }
+
+                // Test Firebase connection first
+                testFirebaseConnection().then((connectionOk) => {
+                    if (!connectionOk) {
+                        console.log('Firebase connection test failed');
+                        showMessage('Database connection failed. Please check your internet connection and try again.');
+                        return;
+                    }
+
+                    console.log('Firebase connection test passed, proceeding with registration...');
+                    proceedWithRegistration(eventId, eventName, walletAddress);
+                }).catch((error) => {
+                    console.error('Firebase connection test error:', error);
+                    showMessage('Database connection error. Please try again later.');
+                });
+            }
+            
+            function testFirebaseConnection() {
+                console.log('Testing Firebase connection...');
+                
+                if (!window.firebaseDatabase) {
+                    console.log('Firebase database not available');
+                    return Promise.resolve(false);
+                }
+
+                // Test write to a temporary location
+                const testRef = window.firebaseRef(window.firebaseDatabase, 'test_connection');
+                const testData = {
+                    timestamp: Date.now(),
+                    test: true
+                };
+
+                return window.firebaseSet(testRef, testData).then(() => {
+                    console.log('Firebase connection test successful');
+                    // Clean up test data
+                    return window.firebaseSet(testRef, null);
+                }).then(() => {
+                    return true;
+                }).catch((error) => {
+                    console.error('Firebase connection test failed:', error);
+                    return false;
+                });
+            }
+            
+            function proceedWithRegistration(eventId, eventName, walletAddress) {
+                console.log('Checking if already registered...');
+                // Check if already registered
+                const registrationRef = window.firebaseRef(window.firebaseDatabase, `event_registrations/${eventId}/${walletAddress}`);
+                
+                window.firebaseGet(registrationRef).then((snapshot) => {
+                    console.log('Registration check result:', snapshot.exists());
+                    if (snapshot.exists()) {
+                        showMessage(`You are already registered for ${eventName}!`);
+                    } else {
+                        console.log('Not registered, proceeding with registration...');
+                        // Register the user
+                        const registrationData = {
+                            walletAddress: walletAddress,
+                            eventId: eventId,
+                            eventName: eventName,
+                            registrationDate: new Date().toISOString(),
+                            playerName: getPlayerName() || 'Anonymous'
+                        };
+
+                        console.log('Registration data:', registrationData);
+
+                        // Try the main path first
+                        window.firebaseSet(registrationRef, registrationData).then(() => {
+                            console.log('Registration successful!');
+                            showMessage(`Successfully registered for ${eventName}!`);
+                            // Show the registration board after a short delay
+                            setTimeout(() => {
+                                showRegistrationBoard(eventId, eventName);
+                            }, 1000);
+                        }).catch((error) => {
+                            console.error('Registration error on main path:', error);
+                            
+                            // Try alternative path if main path fails
+                            console.log('Trying alternative registration path...');
+                            const altRegistrationRef = window.firebaseRef(window.firebaseDatabase, `registrations/${eventId}/${walletAddress}`);
+                            
+                            window.firebaseSet(altRegistrationRef, registrationData).then(() => {
+                                console.log('Registration successful on alternative path!');
+                                showMessage(`Successfully registered for ${eventName}!`);
+                                // Show the registration board after a short delay
+                                setTimeout(() => {
+                                    showRegistrationBoard(eventId, eventName);
+                                }, 1000);
+                            }).catch((altError) => {
+                                console.error('Registration error on alternative path:', altError);
+                                
+                                // Try leaderboard path as last resort
+                                console.log('Trying leaderboard path as last resort...');
+                                const leaderboardRegRef = window.firebaseRef(window.firebaseDatabase, `leaderboard/event_registrations/${eventId}/${walletAddress}`);
+                                
+                                window.firebaseSet(leaderboardRegRef, registrationData).then(() => {
+                                    console.log('Registration successful on leaderboard path!');
+                                    showMessage(`Successfully registered for ${eventName}!`);
+                                    // Show the registration board after a short delay
+                                    setTimeout(() => {
+                                        showRegistrationBoard(eventId, eventName);
+                                    }, 1000);
+                                }).catch((leaderboardError) => {
+                                    console.error('Registration error on all paths:', leaderboardError);
+                                    showMessage('Registration failed. Please try again or contact support.');
+                                });
+                            });
+                        });
+                    }
+                }).catch((error) => {
+                    console.error('Check registration error:', error);
+                    showMessage('Unable to check registration status. Please try again.');
+                });
+            }
+            
+            function getPlayerName() {
+                if (window.getPlayerWallet) {
+                    const wallet = window.getPlayerWallet();
+                    if (wallet) {
+                        return wallet.substring(0, 6) + '...' + wallet.substring(wallet.length - 4);
+                    }
+                }
+                return 'Anonymous';
+            }
+            
+            function showMessage(message) {
+                console.log('Showing message:', message);
+                
+                // Remove existing message modal
+                const existingModal = document.querySelector('.message-modal');
+                if (existingModal) {
+                    document.body.removeChild(existingModal);
+                }
+                
+                // Create message modal
+                const modal = document.createElement('div');
+                modal.className = 'message-modal';
+                modal.innerHTML = `
+                    <div class="message-container">
+                        <h3 class="message-title">PFC</h3>
+                        <p class="message-text">${message}</p>
+                        <button class="ok-button" onclick="closeMessage()">OK</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeMessage();
+                    }
+                });
+                
+                // Close on ESC key
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') {
+                        closeMessage();
+                        document.removeEventListener('keydown', handleKeyPress);
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
+            }
+            
+            function closeMessage() {
+                const modal = document.querySelector('.message-modal');
+                if (modal) {
+                    document.body.removeChild(modal);
+                }
+            }
+            
+            function showRegistrationBoard(eventId, eventName) {
+                console.log('Showing registration board for:', eventId, eventName);
+                
+                // Create modal overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'events-modal';
+                overlay.innerHTML = `
+                    <div class="events-container" style="max-width: 800px; max-height: 80%; overflow-y: auto;">
+                        <h2 class="events-title">${eventName} - Registered Participants</h2>
+                        <div id="registration-content" style="text-align: center; padding: 40px;">
+                            <p style="color: #8B4513; font-size: 18px; font-weight: bold;">Loading registrations...</p>
+                        </div>
+                        <button class="close-button" onclick="closeRegistrationBoard()">Close</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(overlay);
+
+                // Try multiple paths to get registrations
+                const registrationPaths = [
+                    `event_registrations/${eventId}`,
+                    `registrations/${eventId}`,
+                    `leaderboard/event_registrations/${eventId}`
+                ];
+
+                let allRegistrations = [];
+
+                const checkPath = (pathIndex) => {
+                    if (pathIndex >= registrationPaths.length) {
+                        // All paths checked, show results
+                        console.log('All paths checked, total registrations found:', allRegistrations.length);
+                        updateRegistrationContent(allRegistrations, eventName);
+                        return;
+                    }
+
+                    const path = registrationPaths[pathIndex];
+                    console.log(`Checking registrations from path: ${path}`);
+                    
+                    const registrationsRef = window.firebaseRef(window.firebaseDatabase, path);
+                    
+                    window.firebaseGet(registrationsRef).then((snapshot) => {
+                        console.log(`Firebase snapshot for ${path}:`, snapshot.val());
+                        if (snapshot.exists()) {
+                            snapshot.forEach((childSnapshot) => {
+                                const data = childSnapshot.val();
+                                console.log('Registration data from', path, ':', data);
+                                allRegistrations.push(data);
+                            });
+                        }
+                        
+                        // Check next path
+                        checkPath(pathIndex + 1);
+                    }).catch((error) => {
+                        console.error(`Error fetching registrations from ${path}:`, error);
+                        // Check next path even if this one failed
+                        checkPath(pathIndex + 1);
+                    });
+                };
+
+                // Start checking paths
+                checkPath(0);
+
+                // Close functionality
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        closeRegistrationBoard();
+                    }
+                });
+
+                // Close with ESC key
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') {
+                        closeRegistrationBoard();
+                        document.removeEventListener('keydown', handleKeyPress);
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
+            }
+            
+            function closeRegistrationBoard() {
+                const modal = document.querySelector('.events-modal');
+                if (modal) {
+                    document.body.removeChild(modal);
+                }
+            }
+            
+            function updateRegistrationContent(registrations, eventName) {
+                const content = document.getElementById('registration-content');
+                if (!content) return;
+                
+                if (registrations.length === 0) {
+                    content.innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <p style="color: #8B4513; font-size: 16px; font-weight: bold;">No registrations yet for ${eventName}</p>
+                            <p style="color: #A0522D; font-size: 14px; margin-top: 10px;">Be the first to register!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Sort by registration date
+                registrations.sort((a, b) => new Date(a.registrationDate) - new Date(b.registrationDate));
+
+                let html = `
+                    <div style="max-height: 400px; overflow-y: auto; border: 2px solid #8B4513; border-radius: 8px; padding: 15px; background: rgba(255,255,255,0.1);">
+                        <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #8B4513;">
+                            <p style="color: #8B4513; font-weight: bold; margin: 0; text-align: center; font-size: 16px;">
+                                Event Participants: ${registrations.length}
+                            </p>
+                        </div>
+                `;
+
+                registrations.forEach((registration, index) => {
+                    const date = new Date(registration.registrationDate);
+                    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    
+                    html += `
+                        <div style="
+                            background: linear-gradient(135deg, #DEB887 0%, #D2B48C 50%, #DEB887 100%);
+                            border: 2px solid #8B4513;
+                            border-radius: 8px;
+                            padding: 15px;
+                            margin-bottom: 10px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            box-shadow: 
+                                0 2px 0 #8B4513,
+                                0 1px 3px rgba(0,0,0,0.2),
+                                inset 0 1px 0 rgba(255,255,255,0.2);
+                        ">
+                            <div>
+                                <div style="color: #8B4513; font-weight: bold; margin-bottom: 5px; font-size: 14px;">
+                                    #${index + 1} - ${registration.playerName || 'Anonymous'}
+                                </div>
+                                <div style="color: #A0522D; font-size: 11px; font-family: monospace;">
+                                    ${registration.walletAddress && typeof registration.walletAddress === 'string' && registration.walletAddress.length >= 10 ? 
+                                        registration.walletAddress.substring(0, 6) + '...' + registration.walletAddress.substring(registration.walletAddress.length - 4) : 
+                                        'Unknown'}
+                                </div>
+                            </div>
+                            <div style="color: #8B4513; font-size: 11px; text-align: right; font-weight: bold;">
+                                ${formattedDate}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                content.innerHTML = html;
+            }
+            
+            function loadParticipantsForEvent(eventId, eventName, contentContainer) {
+                if (!window.firebaseDatabase) {
+                    contentContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <p style="color: #8B4513; font-size: 18px; font-weight: bold;">Database not available</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Show loading
+                contentContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <p style="color: #8B4513; font-size: 18px; font-weight: bold;">Loading ${eventName} participants...</p>
+                    </div>
+                `;
+
+                // Try multiple paths to get registrations
+                const registrationPaths = [
+                    `event_registrations/${eventId}`,
+                    `registrations/${eventId}`,
+                    `leaderboard/event_registrations/${eventId}`
+                ];
+
+                let allRegistrations = [];
+
+                const checkPath = (pathIndex) => {
+                    if (pathIndex >= registrationPaths.length) {
+                        // All paths checked, show results
+                        console.log('All paths checked, total registrations found:', allRegistrations.length);
+                        updateParticipantsContent(allRegistrations, eventName, contentContainer);
+                        return;
+                    }
+
+                    const path = registrationPaths[pathIndex];
+                    console.log(`Checking registrations from path: ${path}`);
+                    
+                    const registrationsRef = window.firebaseRef(window.firebaseDatabase, path);
+                    
+                    window.firebaseGet(registrationsRef).then((snapshot) => {
+                        console.log(`Firebase snapshot for ${path}:`, snapshot.val());
+                        if (snapshot.exists()) {
+                            snapshot.forEach((childSnapshot) => {
+                                const data = childSnapshot.val();
+                                console.log('Registration data from', path, ':', data);
+                                allRegistrations.push(data);
+                            });
+                        }
+                        
+                        // Check next path
+                        checkPath(pathIndex + 1);
+                    }).catch((error) => {
+                        console.error(`Error fetching registrations from ${path}:`, error);
+                        // Check next path even if this one failed
+                        checkPath(pathIndex + 1);
+                    });
+                };
+
+                // Start checking paths
+                checkPath(0);
+            }
+            
+            function updateParticipantsContent(registrations, eventName, contentContainer) {
+                if (registrations.length === 0) {
+                    contentContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <p style="color: #8B4513; font-size: 16px; font-weight: bold;">No registrations yet for ${eventName}</p>
+                            <p style="color: #A0522D; font-size: 14px; margin-top: 10px;">Be the first to register!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Sort by registration date
+                registrations.sort((a, b) => new Date(a.registrationDate) - new Date(b.registrationDate));
+
+                let html = `
+                    <div style="max-height: 400px; overflow-y: auto; border: 2px solid #8B4513; border-radius: 8px; padding: 15px; background: rgba(255,255,255,0.1);">
+                        <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #8B4513;">
+                            <p style="color: #8B4513; font-weight: bold; margin: 0; text-align: center; font-size: 16px;">
+                                Event Participants: ${registrations.length}
+                            </p>
+                        </div>
+                `;
+
+                registrations.forEach((registration, index) => {
+                    const date = new Date(registration.registrationDate);
+                    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    
+                    html += `
+                        <div style="
+                            background: linear-gradient(135deg, #DEB887 0%, #D2B48C 50%, #DEB887 100%);
+                            border: 2px solid #8B4513;
+                            border-radius: 8px;
+                            padding: 15px;
+                            margin-bottom: 10px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            box-shadow: 
+                                0 2px 0 #8B4513,
+                                0 1px 3px rgba(0,0,0,0.2),
+                                inset 0 1px 0 rgba(255,255,255,0.2);
+                        ">
+                            <div>
+                                <div style="color: #8B4513; font-weight: bold; margin-bottom: 5px; font-size: 14px;">
+                                    #${index + 1} - ${registration.playerName || 'Anonymous'}
+                                </div>
+                                <div style="color: #A0522D; font-size: 11px; font-family: monospace;">
+                                    ${registration.walletAddress && typeof registration.walletAddress === 'string' && registration.walletAddress.length >= 10 ? 
+                                        registration.walletAddress.substring(0, 6) + '...' + registration.walletAddress.substring(registration.walletAddress.length - 4) : 
+                                        'Unknown'}
+                                </div>
+                            </div>
+                            <div style="color: #8B4513; font-size: 11px; text-align: right; font-weight: bold;">
+                                ${formattedDate}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                contentContainer.innerHTML = html;
+            }
+            
+            // Skin system functions
+            function showSkinSelector() {
+                console.log('Opening skin selector...');
+                
+                const modal = document.createElement('div');
+                modal.className = 'skin-modal';
+                modal.innerHTML = `
+                      <div class="skin-container">
+                          <h2 class="skin-title">Skins Available</h2>
+                          
+                          <!-- Hats Section -->
+                          <div class="skin-category">
+                              <h3 class="category-title">Hats</h3>
+                              <div class="skin-option ${getCurrentSkin() === 'People1' ? 'selected' : ''}" onclick="selectSkin('People1')">
+                                  <span>Default</span>
+                                  <div class="skin-preview">
+                                      <img src="img/characters/normalhat.png" alt="Default" onerror="this.style.display='none'; this.parentElement.innerHTML='👤';">
+                                  </div>
+                              </div>
+                              <div class="skin-option ${getCurrentSkin() === 'greenhatskin' ? 'selected' : ''}" onclick="selectSkin('greenhatskin')">
+                                  <span>Abs Hat</span>
+                                  <div class="skin-preview">
+                                      <img src="img/characters/greenhat.png" alt="Abs Hat" onerror="this.style.display='none'; this.parentElement.innerHTML='🧢';">
+                                  </div>
+                              </div>
+                              <div class="skin-option ${getCurrentSkin() === 'mariohat' ? 'selected' : ''}" onclick="selectSkin('mariohat')">
+                                  <span>Mario Hat</span>
+                                  <div class="skin-preview">
+                                      <img src="img/characters/mariomodalhat.png" alt="Mario Hat" onerror="this.style.display='none'; this.parentElement.innerHTML='🍄';">
+                                  </div>
+                              </div>
+                              <div class="skin-option ${getCurrentSkin() === 'Dluffyhat' ? 'selected' : ''}" onclick="selectSkin('Dluffyhat')">
+                                  <span>Luffy Hat</span>
+                                  <div class="skin-preview">
+                                      <img src="img/characters/luffyhat.png" alt="Luffy Hat" onerror="this.style.display='none'; this.parentElement.innerHTML='👒';">
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          <!-- Body/Clothing Section -->
+                          <div class="skin-category">
+                              <h3 class="category-title">Body</h3>
+                              <div class="skin-option ${getCurrentSkin() === 'default' ? 'selected' : ''}" onclick="selectSkin('default')">
+                                  <span>Default</span>
+                                  <div class="skin-preview">
+                                      <img src="img/characters/defaultbody.png" alt="Default" onerror="this.style.display='none'; this.parentElement.innerHTML='👤';">
+                                  </div>
+                              </div>
+                              <div class="skin-option ${getCurrentSkin() === 'Body1' ? 'selected' : ''}" onclick="selectSkin('Body1')">
+                                  <span>Luffy Shirt</span>
+                                  <div class="skin-preview">
+                                      <img src="img/characters/luffyshirt.png" alt="Luffy Shirt" onerror="this.style.display='none'; this.parentElement.innerHTML='👕';">
+                                  </div>
+                              </div>
+                              <div class="skin-option ${getCurrentSkin() === 'armor' ? 'selected' : ''}" onclick="selectSkin('armor')">
+                                  <span>Armor</span>
+                                  <div class="skin-preview">
+                                      <img src="img/characters/miniarmor.png" alt="Armor" onerror="this.style.display='none'; this.parentElement.innerHTML='🛡️';">
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          <button class="close-skin-button" onclick="closeSkinSelector()">Close</button>
+                      </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeSkinSelector();
+                    }
+                });
+                
+                // Close on ESC key
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') {
+                        closeSkinSelector();
+                        document.removeEventListener('keydown', handleKeyPress);
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
+            }
+
+            function selectSkin(skin) {
+                console.log('Selecting skin:', skin);
+                
+                // Save skin selection
+                localStorage.setItem('penguinFishingClub_currentSkin', skin);
+                
+                // Handle clothing layer separately
+                if (skin === 'Body1' || skin === 'armor') {
+                    localStorage.setItem('penguinFishingClub_currentClothing', skin);
+                    // Apply clothing using the working method
+                    setTimeout(() => {
+                        if (typeof SceneManager !== 'undefined' && SceneManager._scene && SceneManager._scene._spriteset && SceneManager._scene._spriteset._characterSprites) {
+                            const playerSprite = SceneManager._scene._spriteset._characterSprites.find(sprite => 
+                                sprite._character === $gamePlayer
+                            );
+                            if (playerSprite) {
+                                applyClothingLayer(playerSprite, skin);
+                            }
+                        }
+                    }, 500);
+                } else if (skin === 'default') {
+                    // Remove all clothing
+                    localStorage.setItem('penguinFishingClub_currentClothing', 'none');
+                    // Remove clothing sprite if it exists
+                    setTimeout(() => {
+                        if (typeof SceneManager !== 'undefined' && SceneManager._scene && SceneManager._scene._spriteset && SceneManager._scene._spriteset._characterSprites) {
+                            const playerSprite = SceneManager._scene._spriteset._characterSprites.find(sprite => 
+                                sprite._character === $gamePlayer
+                            );
+                            if (playerSprite && playerSprite._clothingSprite) {
+                                if (playerSprite._clothingSprite.parent) {
+                                    playerSprite._clothingSprite.parent.removeChild(playerSprite._clothingSprite);
+                                }
+                                playerSprite._clothingSprite = null;
+                                playerSprite._clothingName = null;
+                            }
+                        }
+                    }, 500);
+                } else {
+                    // If selecting a base skin, keep the current clothing if any
+                    const currentClothing = localStorage.getItem('penguinFishingClub_currentClothing');
+                    if (currentClothing && currentClothing !== 'none') {
+                        // Reapply clothing after skin change
+                        setTimeout(() => {
+                            if (typeof SceneManager !== 'undefined' && SceneManager._scene && SceneManager._scene._spriteset && SceneManager._scene._spriteset._characterSprites) {
+                                const playerSprite = SceneManager._scene._spriteset._characterSprites.find(sprite => 
+                                    sprite._character === $gamePlayer
+                                );
+                                if (playerSprite) {
+                                    applyClothingLayer(playerSprite, currentClothing);
+                                }
+                            }
+                        }, 500);
+                    }
+                }
+                
+                // Update visual selection
+                document.querySelectorAll('.skin-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Find and select the clicked option
+                const clickedOption = event.target.closest('.skin-option');
+                if (clickedOption) {
+                    clickedOption.classList.add('selected');
+                }
+                
+                // Show confirmation
+                let currentSkinName;
+                switch(skin) {
+                    case 'People1':
+                        currentSkinName = 'Default';
+                        break;
+                    case 'greenhatskin':
+                        currentSkinName = 'Abs Hat';
+                        break;
+                    case 'mariohat':
+                        currentSkinName = 'Mario Hat';
+                        break;
+                    case 'Dluffyhat':
+                        currentSkinName = 'Luffy Hat';
+                        break;
+                    case 'Body1':
+                        currentSkinName = 'Luffy Shirt';
+                        break;
+                    default:
+                        currentSkinName = 'Unknown';
+                }
+                showMessage(`Skin changed to: ${currentSkinName}`);
+                
+                // Apply skin to game directly
+                applySkinToGame(skin);
+                
+                console.log('Skin applied:', skin);
+            }
+            
+            function applySkinToGame(skin) {
+                try {
+                    // Get the base skin (without clothing)
+                    let baseSkin = skin;
+                    let clothingLayer = null;
+                    
+                    // If Body1 or armor is selected, we need to apply it as a clothing layer over the current base skin
+                    if (skin === 'Body1' || skin === 'armor') {
+                        // Get the previously selected base skin, or default to People1
+                        const savedBaseSkin = localStorage.getItem('penguinFishingClub_baseSkin') || 'People1';
+                        baseSkin = savedBaseSkin;
+                        clothingLayer = skin;
+                        console.log('Applying clothing layer', skin, 'over base skin:', baseSkin);
+                    } else if (skin === 'default') {
+                        // Default means no clothing layer, just the base skin
+                        const savedBaseSkin = localStorage.getItem('penguinFishingClub_baseSkin') || 'People1';
+                        baseSkin = savedBaseSkin;
+                        clothingLayer = null;
+                        console.log('Applying default (no clothing) with base skin:', baseSkin);
+                    } else {
+                        // Save this as the base skin for clothing layers
+                        localStorage.setItem('penguinFishingClub_baseSkin', skin);
+                        console.log('Set base skin to:', skin);
+                    }
+                    
+                    // Try to apply skin through the game's actor system
+                    if (typeof $gameActors !== 'undefined' && $gameActors.actor(1)) {
+                        const actor = $gameActors.actor(1);
+                        actor._characterName = baseSkin;
+                        console.log('Applied base skin to actor:', baseSkin);
+                    }
+                    
+                    // Try to apply skin to player directly
+                    if (typeof $gamePlayer !== 'undefined') {
+                        $gamePlayer._characterName = baseSkin;
+                        console.log('Applied base skin to player:', baseSkin);
+                    }
+                    
+                    // Force refresh if spriteset exists
+                    if (typeof $gameMap !== 'undefined' && $gameMap._spriteset) {
+                        setTimeout(() => {
+                            if ($gameMap._spriteset._characterSprites) {
+                                const playerSprite = $gameMap._spriteset._characterSprites.find(sprite => 
+                                    sprite._character === $gamePlayer
+                                );
+                                if (playerSprite) {
+                                    playerSprite._characterName = baseSkin;
+                                    playerSprite._tilesetId = -1;
+                                    playerSprite._tileId = 0;
+                                    console.log('Refreshed player sprite with base skin:', baseSkin);
+                                    
+                                    // If we have a clothing layer, apply it
+                                    if (clothingLayer) {
+                                        applyClothingLayer(playerSprite, clothingLayer);
+                                    }
+                                }
+                            }
+                        }, 100);
+                    }
+                } catch (error) {
+                    console.log('Error applying skin:', error);
+                }
+            }
+            
+            function applyClothingLayer(playerSprite, clothingName) {
+                try {
+                    if (!playerSprite) {
+                        return;
+                    }
+                    
+                    // Remove existing clothing sprite if any
+                    if (playerSprite._clothingSprite) {
+                        if (playerSprite._clothingSprite.parent) {
+                            playerSprite._clothingSprite.parent.removeChild(playerSprite._clothingSprite);
+                        }
+                        playerSprite._clothingSprite = null;
+                    }
+                    
+                    // Create new clothing sprite
+                    const clothingSprite = new Sprite();
+                    clothingSprite.bitmap = ImageManager.loadCharacter(clothingName);
+                    
+                    clothingSprite.anchor.x = 0.5;
+                    clothingSprite.anchor.y = 1;
+                    clothingSprite.z = playerSprite.z + 1;
+                    
+                    // Add to the same parent as the player sprite
+                    if (playerSprite.parent) {
+                        playerSprite.parent.addChild(clothingSprite);
+                        playerSprite._clothingSprite = clothingSprite;
+                        
+                        // Sync position
+                        clothingSprite.x = playerSprite.x;
+                        clothingSprite.y = playerSprite.y;
+                        clothingSprite.scale.x = playerSprite.scale.x;
+                        clothingSprite.scale.y = playerSprite.scale.y;
+                        clothingSprite.visible = playerSprite.visible;
+                        
+                        // Set up update function to keep clothing in sync
+                        clothingSprite.update = function() {
+                            if (playerSprite && playerSprite._clothingSprite) {
+                                this.x = playerSprite.x;
+                                this.y = playerSprite.y;
+                                this.scale.x = playerSprite.scale.x;
+                                this.scale.y = playerSprite.scale.y;
+                                this.visible = playerSprite.visible;
+                                
+                                // Copy frame from main sprite
+                                if (playerSprite._frame && this.bitmap) {
+                                    this.setFrame(
+                                        playerSprite._frame.x,
+                                        playerSprite._frame.y,
+                                        playerSprite._frame.width,
+                                        playerSprite._frame.height
+                                    );
+                                }
+                            }
+                        };
+                    }
+                } catch (error) {
+                    console.log('Error applying clothing layer:', error);
+                }
+            }
+
+            function getCurrentSkin() {
+                return localStorage.getItem('penguinFishingClub_currentSkin') || 'People1';
+            }
+
+            function closeSkinSelector() {
+                const modal = document.querySelector('.skin-modal');
+                if (modal) {
+                    document.body.removeChild(modal);
+                }
+            }
+
+            // Make functions available globally for the game menu
+            window.showEvents = showEvents;
+            window.showRegistrationBoard = showRegistrationBoard;
+            window.registerForEvent = registerForEvent;
+            window.showMessage = showMessage;
+            window.closeMessage = closeMessage;
+            window.closeEvents = closeEvents;
+            window.closeRegistrationBoard = closeRegistrationBoard;
+            window.showAllParticipants = showAllParticipants;
+            window.closeAllParticipants = closeAllParticipants;
+            window.loadParticipantsForEvent = loadParticipantsForEvent;
+            window.updateParticipantsContent = updateParticipantsContent;
+            window.showSkinSelector = showSkinSelector;
+            window.selectSkin = selectSkin;
+            window.getCurrentSkin = getCurrentSkin;
+            window.closeSkinSelector = closeSkinSelector;
+            window.applySkinToGame = applySkinToGame;
+            window.applyClothingLayer = applyClothingLayer;
+            
+            // Function to wait for spriteset to be ready
+            function waitForSpriteset(callback, maxAttempts = 20) {
+                let attempts = 0;
+                const checkSpriteset = () => {
+                    attempts++;
+                    
+                    if (typeof $gameMap !== 'undefined' && $gameMap._spriteset && $gameMap._spriteset._characterSprites) {
+                        callback();
+                    } else if (attempts < maxAttempts) {
+                        setTimeout(checkSpriteset, 500);
+                    }
+                };
+                checkSpriteset();
+            }
+
+            // Alternative method to find player sprite
+            window.findPlayerSpriteAlternative = function() {
+                console.log('Trying alternative method to find player sprite...');
+                
+                // Try different ways to access the player sprite
+                if (typeof SceneManager !== 'undefined' && SceneManager._scene) {
+                    console.log('SceneManager._scene exists');
+                    if (SceneManager._scene._spriteset) {
+                        console.log('SceneManager._scene._spriteset exists');
+                        if (SceneManager._scene._spriteset._characterSprites) {
+                            console.log('Found character sprites via SceneManager');
+                            const playerSprite = SceneManager._scene._spriteset._characterSprites.find(sprite => 
+                                sprite._character === $gamePlayer
+                            );
+                            if (playerSprite) {
+                                console.log('Player sprite found via SceneManager!');
+                                applyClothingLayer(playerSprite, 'Body1');
+                                return;
+                            }
+                        }
+                    }
+                }
+                
+                // Try accessing via Graphics
+                if (typeof Graphics !== 'undefined' && Graphics._renderer) {
+                    console.log('Graphics._renderer exists');
+                    // This is a more direct approach
+                    const allSprites = Graphics._renderer.children;
+                    console.log('Total sprites in renderer:', allSprites.length);
+                    
+                    for (let sprite of allSprites) {
+                        if (sprite._character === $gamePlayer) {
+                            console.log('Found player sprite via Graphics renderer!');
+                            applyClothingLayer(sprite, 'Body1');
+                            return;
+                        }
+                    }
+                }
+                
+                console.log('Alternative methods failed');
+            };
+            
+            // Quick test function using the working method
+            window.testClothingQuick = function() {
+                console.log('Quick clothing test...');
+                if (typeof SceneManager !== 'undefined' && SceneManager._scene && SceneManager._scene._spriteset && SceneManager._scene._spriteset._characterSprites) {
+                    const playerSprite = SceneManager._scene._spriteset._characterSprites.find(sprite => 
+                        sprite._character === $gamePlayer
+                    );
+                    if (playerSprite) {
+                        console.log('Found player sprite, applying Body1...');
+                        applyClothingLayer(playerSprite, 'Body1');
+                    } else {
+                        console.log('Player sprite not found');
+                    }
+                } else {
+                    console.log('SceneManager not ready');
+                }
+            };
+
+            // Debug function to test clothing system
+            window.testClothing = function() {
+                console.log('Testing clothing system...');
+                console.log('Game map exists:', typeof $gameMap !== 'undefined');
+                console.log('Spriteset exists:', typeof $gameMap !== 'undefined' && $gameMap._spriteset);
+                console.log('Character sprites exist:', typeof $gameMap !== 'undefined' && $gameMap._spriteset && $gameMap._spriteset._characterSprites);
+                
+                if (typeof $gameMap !== 'undefined' && $gameMap._spriteset && $gameMap._spriteset._characterSprites) {
+                    console.log('Number of character sprites:', $gameMap._spriteset._characterSprites.length);
+                    const playerSprite = $gameMap._spriteset._characterSprites.find(sprite => 
+                        sprite._character === $gamePlayer
+                    );
+                    if (playerSprite) {
+                        console.log('Player sprite found, applying Body1...');
+                        applyClothingLayer(playerSprite, 'Body1');
+                    } else {
+                        console.log('Player sprite not found in character sprites');
+                        console.log('Available sprites:', $gameMap._spriteset._characterSprites.map(s => s._character));
+                    }
+                } else {
+                    console.log('Game map not ready, waiting for spriteset...');
+                    waitForSpriteset(() => {
+                        console.log('Spriteset ready, now applying clothing...');
+                        const playerSprite = $gameMap._spriteset._characterSprites.find(sprite => 
+                            sprite._character === $gamePlayer
+                        );
+                        if (playerSprite) {
+                            console.log('Player sprite found, applying Body1...');
+                            applyClothingLayer(playerSprite, 'Body1');
+                        } else {
+                            console.log('Player sprite not found in character sprites');
+                            console.log('Available sprites:', $gameMap._spriteset._characterSprites.map(s => s._character));
+                        }
+                    });
+                }
+            };
+            
+            // Apply saved skin when game loads
+            window.addEventListener('load', function() {
+                setTimeout(() => {
+                    const savedSkin = getCurrentSkin();
+                    console.log('Applying saved skin on load:', savedSkin);
+                    applySkinToGame(savedSkin);
+                    
+                    // Also check if we need to apply clothing layer
+                    const savedClothing = localStorage.getItem('penguinFishingClub_currentClothing');
+                    if (savedClothing && savedClothing !== 'none') {
+                        console.log('Applying saved clothing on load:', savedClothing);
+                        
+                        // Use the working method with SceneManager directly
+                        const applyClothingOnLoad = () => {
+                            if (typeof SceneManager !== 'undefined' && SceneManager._scene && SceneManager._scene._spriteset && SceneManager._scene._spriteset._characterSprites) {
+                                const playerSprite = SceneManager._scene._spriteset._characterSprites.find(sprite => 
+                                    sprite._character === $gamePlayer
+                                );
+                                if (playerSprite) {
+                                    console.log('Found player sprite for clothing on load');
+                                    applyClothingLayer(playerSprite, savedClothing);
+                                } else {
+                                    console.log('Player sprite not found, retrying...');
+                                    setTimeout(applyClothingOnLoad, 500);
+                                }
+                            } else {
+                                console.log('SceneManager not ready, retrying...');
+                                setTimeout(applyClothingOnLoad, 500);
+                            }
+                        };
+                        
+                        // Start trying after a delay
+                        setTimeout(applyClothingOnLoad, 1000);
+                    }
+                }, 2000); // Wait for game to fully load
+            });
+        </script>
+    </head>
+    <body style="background-color: black">
+        <button id="muteButton" onclick="toggleMute()" title="Toggle Audio">🔊</button>
+        <button id="toggleUIButton" onclick="toggleUI()" title="Toggle UI">👁️</button>
+        <button id="eventsButton" onclick="showEvents()" title="Events">🎯</button>
+        <button id="skinButton" onclick="showSkinSelector()" title="Change Skin">👕</button>
+        <div id="versionLabel">V 0.0.12</div>
+        <script type="text/javascript" src="js/main.js"></script>
+    </body>
+</html>
+

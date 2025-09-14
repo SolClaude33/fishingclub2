@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penguin Fishing Club - Updates</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #F5F5DC 0%, #F0E68C 50%, #F5F5DC 100%);
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background-image: url('background.gif');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+            border: 3px solid #654321;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 
+                0 6px 0 #654321,
+                0 4px 8px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #654321;
+            text-transform: uppercase;
+        }
+
+        .updates-container {
+            display: grid;
+            gap: 20px;
+        }
+
+        .updates-section {
+            background: linear-gradient(135deg, #FFF8DC 0%, #F5DEB3 50%, #FFF8DC 100%);
+            border: 3px solid #8B4513;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 
+                0 4px 0 #8B4513,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .update-card {
+            background: linear-gradient(135deg, #DEB887 0%, #D2B48C 50%, #DEB887 100%);
+            border: 3px solid #8B4513;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 
+                0 4px 0 #8B4513,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .update-card:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 16px rgba(139, 69, 19, 0.3);
+        }
+
+        .update-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .update-icon {
+            width: 60px;
+            height: 60px;
+            background: #90EE90;
+            border: 3px solid #8B4513;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .update-info {
+            flex: 1;
+        }
+
+        .update-title {
+            color: #8B4513;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            text-shadow: 1px 1px 0px #F5DEB3;
+        }
+
+        .update-date {
+            color: #A0522D;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .update-content {
+            color: #556B2F;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .update-badge {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #4CAF50 100%);
+            border: 3px solid #2E7D32;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 4px 0 #2E7D32,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+            color: white;
+            border: 2px solid #654321;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 3px 0 #654321,
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .back-button:hover {
+            background: linear-gradient(135deg, #A0522D 0%, #CD853F 50%, #A0522D 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 0 #654321, 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .update-card {
+                padding: 20px;
+            }
+            
+            .update-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .update-badge {
+                position: static;
+                margin-top: 15px;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.close()">←</button>
+    
+    <div class="container">
+        <div class="updates-section">
+            <div class="header">
+                <h1>Game Updates</h1>
+            </div>
+            
+            <div class="updates-container">
+                        <!-- Update - Skin System -->
+            <div class="update-card">
+                <div class="update-badge">New</div>
+                <div class="update-header">
+                    <div class="update-icon">
+                        👕
+                    </div>
+                    <div class="update-info">
+                        <h3 class="update-title">Skin System - Hat Collection</h3>
+                        <p class="update-date">September 5, 2025</p>
+                    </div>
+                </div>
+                <p class="update-content">
+                    Introducing our brand new skin system! Customize your character with different hats and accessories. Currently featuring 4 unique hat styles: Default, Abs Hat, Mario Hat, and Luffy Hat. Access the skin selector through the new 👕 button in the game interface. Each skin comes with its own preview image and can be changed instantly. More skins and accessories coming soon!
+                </p>
+            </div>
+                        <!-- Update - Blockchain Coinflip -->
+            <div class="update-card">
+                <div class="update-badge">New</div>
+                <div class="update-header">
+                    <div class="update-icon">
+                        <img src="img/pictures/bigcoin.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Blockchain Coinflip">
+                    </div>
+                    <div class="update-info">
+                        <h3 class="update-title">Coinflip</h3>
+                        <p class="update-date">September 4, 2025</p>
+                    </div>
+                </div>
+                <p class="update-content">
+                    Place bets from 0.0001 ETH to 0.1 ETH and test your luck. The smart contract ensures fair gameplay with transparent results. Simply enter through the door of the building with the coinflip sign and try your hand at this exciting new feature. Your winnings are automatically transferred to your wallet upon victory!
+                </p>
+            </div>
+                        <!-- Update - Player Movement Fix -->
+            <div class="update-card">
+                <div class="update-badge">Fix</div>
+                <div class="update-header">
+                    <div class="update-icon">
+                        <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Player Movement Fix">
+                    </div>
+                    <div class="update-info">
+                        <h3 class="update-title">Player Movement Fix</h3>
+                        <p class="update-date">September 1, 2025</p>
+                    </div>
+                </div>
+                <p class="update-content">
+                    Fixed player movement to prevent click interference. Players can now only move using keyboard arrow keys, ensuring that clicking on the screen doesn't accidentally trigger unwanted movement. This improvement provides better control and prevents accidental navigation when interacting with game elements.
+                </p>
+            </div>
+                        <!-- Update - Car Position Fix -->
+            <div class="update-card">
+                <div class="update-badge">Fix</div>
+                <div class="update-header">
+                    <div class="update-icon">
+                        <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Car Position Fix">
+                    </div>
+                    <div class="update-info">
+                        <h3 class="update-title">Car Position Fix</h3>
+                        <p class="update-date">August 19, 2025</p>
+                    </div>
+                </div>
+                <p class="update-content">
+                    Fixed an issue where the car would maintain its position when players disconnected, preventing it from returning to its original spawn location. This fix ensures that players who disconnect and reconnect won't find themselves stuck in water or other inaccessible locations, as the car now properly resets to its designated starting position.
+                </p>
+            </div>
+                        <!-- Update - New Flying Car -->
+            <div class="update-card">
+                <div class="update-badge">New</div>
+                <div class="update-header">
+                    <div class="update-icon">
+                        <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Flying Car">
+                    </div>
+                    <div class="update-info">
+                        <h3 class="update-title">New Flying Car</h3>
+                        <p class="update-date">August 16, 2025</p>
+                    </div>
+                </div>
+                <p class="update-content">
+                    Jump into our new flying car and speed across the entire map. It can take off and glide quickly over the world, and a special music theme plays when you board for an immersive ride.
+                </p>
+            </div>
+                         <!-- Update - Vendor Machine Mint NFTs -->
+            <div class="update-card">
+                <div class="update-badge">Coming</div>
+                <div class="update-header">
+                    <div class="update-icon">
+                        <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Vendor Machine Mint">
+                    </div>
+                    <div class="update-info">
+                        <h3 class="update-title">Vendor Machine for NFT Minting</h3>
+                        <p class="update-date">August 14, 2025</p>
+                    </div>
+                </div>
+                <p class="update-content">
+                    We are introducing a vendor machine inside the game that will let you mint our upcoming NFT collection directly in-game. The collection is being prepared and will go live soon you'll be able to mint through the vendor machine once it's live.
+                </p>
+            </div>
+                         <!-- Update 0 - Huge Fishing Minigame -->
+             <div class="update-card">
+                 <div class="update-badge">Huge</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Fishing Minigame">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Huge Update: Fishing Minigame</h3>
+                         <p class="update-date">August 13, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Penguin Fishing Club now features a skill-based fishing minigame. Time your cast, hit the yellow target zone, and hook better rewards. Catch mackerel, anchovy, salmon, trout, and even rare treasure. Play at any fishing spot and test your timing.
+                 </p>
+             </div>
+                         <!-- Update 1 - Winter Theme -->
+             <div class="update-card">
+                 <div class="update-badge">New</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Winter Theme">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Winter Snow Theme Update</h3>
+                         <p class="update-date">June 12, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     We've transformed the game's atmosphere with a beautiful winter snow theme! The entire environment now features a cozy snowy landscape with frost-covered trees, snow-covered fishing spots, and a peaceful winter ambiance. The new theme creates a relaxing and immersive fishing experience where Penguin Fishing Club penguins adapt best. Enjoy fishing in this magical snowy setting!
+                 </p>
+             </div>
+
+                         <!-- Update 2 - Sprite Cleanup Fix -->
+             <div class="update-card">
+                 <div class="update-badge">Fix</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Sprite Cleanup Fix">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Sprite Cleanup and Fishing Spot Fix</h3>
+                         <p class="update-date">July 11, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Fixed a critical issue where sprites were not being properly cleaned up after fishing actions, causing them to accumulate and block fishing spots. The cleanup system now properly removes all temporary sprites and ensures fishing spots remain accessible. This fix improves game performance and prevents visual clutter that could interfere with your fishing experience.
+                 </p>
+             </div>
+
+                         <!-- Update 2 -->
+             <div class="update-card">
+                 <div class="update-badge">Latest</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Fishing Tournament">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">New Fishing Tournament System</h3>
+                         <p class="update-date">July 10, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     We've completely revamped our fishing tournament system! Players can now participate in monthly tournaments with real-time leaderboards. The new system includes automatic score tracking, fair competition rules, and exclusive rewards for top performers. Join the first tournament this Saturday!
+                 </p>
+             </div>
+
+                         <!-- Update 2 -->
+             <div class="update-card">
+                 <div class="update-badge">Feature</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Community Challenge">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Community Challenge Events</h3>
+                         <p class="update-date">July 8, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Introducing weekly community challenges! These special events will test your fishing skills with unique objectives and time-limited goals. Complete challenges to earn exclusive badges and recognition in our community. The first challenge starts next week!
+                 </p>
+             </div>
+
+                         <!-- Update 3 -->
+             <div class="update-card">
+                 <div class="update-badge">Improvement</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Performance">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Performance Optimization</h3>
+                         <p class="update-date">July 8, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Major performance improvements implemented! The game now runs 40% faster with reduced loading times and smoother animations. We've also optimized the leaderboard system for better real-time updates and improved overall user experience.
+                 </p>
+             </div>
+
+                         <!-- Update 4 -->
+             <div class="update-card">
+                 <div class="update-badge">New</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Wallet Integration">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Wallet Integration System</h3>
+                         <p class="update-date">July 5, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Full wallet integration is now live! Connect your MetaMask wallet to track your fishing progress, participate in tournaments, and earn rewards. Your achievements are now permanently linked to your wallet address for secure and transparent tracking.
+                 </p>
+             </div>
+
+                         <!-- Update 5 -->
+             <div class="update-card">
+                 <div class="update-badge">Fix</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Bug Fixes">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Bug Fixes and Stability</h3>
+                         <p class="update-date">June 28, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Fixed several critical bugs including fish counter display issues, leaderboard synchronization problems, and audio glitches. The game is now more stable and reliable. Thank you for your patience and feedback!
+                 </p>
+             </div>
+
+                         <!-- Update 6 -->
+             <div class="update-card">
+                 <div class="update-badge">Update</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="UI Improvements">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">UI/UX Improvements</h3>
+                         <p class="update-date">June 25, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Complete UI overhaul with modern 3D styling! New button effects, improved color scheme, and better visual feedback. The interface is now more intuitive and visually appealing while maintaining the charming fishing theme.
+                 </p>
+             </div>
+
+                         <!-- Update 7 -->
+             <div class="update-card">
+                 <div class="update-badge">Launch</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Game Launch">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Game Launch</h3>
+                         <p class="update-date">June 20, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Welcome to Penguin Fishing Club! The game is now officially live with all core features including fishing mechanics, global leaderboards, and social features. Join our growing community of fishing enthusiasts and start your adventure today!
+                 </p>
+             </div>
+
+                         <!-- Update 8 -->
+             <div class="update-card">
+                 <div class="update-badge">Beta</div>
+                 <div class="update-header">
+                     <div class="update-icon">
+                         <img src="img/favicon.png" style="width: 50px; height: 50px; object-fit: contain;" alt="Beta Testing">
+                     </div>
+                     <div class="update-info">
+                         <h3 class="update-title">Beta Testing Phase</h3>
+                         <p class="update-date">June 15, 2025</p>
+                     </div>
+                 </div>
+                 <p class="update-content">
+                     Beta testing phase completed successfully! Thanks to all our beta testers for their valuable feedback. We've implemented numerous improvements based on your suggestions, making the game much better for the official launch.
+                 </p>
+             </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.update-card');
+            
+            cards.forEach((card, index) => {
+                // Add staggered animation on load
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
