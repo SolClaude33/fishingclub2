@@ -97,89 +97,77 @@
         return button;
     }
 
-    // Connect to Abstract Global Wallet via Privy (adapted from AGW React)
+    // Inicializa Privy solo una vez
+    let privyClient = null;
+    function getPrivyClient() {
+        if (!privyClient) {
+            privyClient = new window.Privy.PrivyClient({
+                appId: 'cm04asygd041fmry9zmcyn5o5'
+            });
+        }
+        return privyClient;
+    }
+
     async function connectAGW() {
         const button = document.getElementById('wallet-connect-btn');
         try {
             button.textContent = 'Redirigiendo...';
             button.disabled = true;
-            // Usar el mismo flujo de login que AGW React
-            const appId = 'cm04asygd041fmry9zmcyn5o5';
-            const privyUrl = `https://privy.abs.xyz/cross-app/connect?provider_app_id=${appId}&connect=true&requester_origin=${encodeURIComponent(window.location.origin)}`;
-            const popup = window.open(
-                privyUrl,
-                'privy-connect',
-                'width=500,height=700,scrollbars=yes,resizable=yes'
-            );
-            if (!popup) {
-                throw new Error('Popup bloqueado. Permite popups para este sitio.');
-            }
-            // Escuchar mensajes del popup
-            const messageHandler = (event) => {
-                if (event.origin !== 'https://privy.abs.xyz') return;
-                if (event.data.type === 'PRIVY_CONNECT_SUCCESS') {
-                    currentAccount = event.data.account;
-                    userInfo = event.data.user || null;
-                    isConnected = true;
-                    setButtonState(button, true, currentAccount);
-                    showNotification('¡Abstract Global Wallet conectada!', 'success');
-                    if (window.setCurrentWalletAddress) window.setCurrentWalletAddress(currentAccount);
-                    if (window.resetFishingSystem) window.resetFishingSystem();
-                    window.dispatchEvent(new CustomEvent('walletConnected', {
-                        detail: {
-                            wallet: currentAccount,
-                            provider: 'agw-privy',
-                            user: userInfo
-                        }
-                    }));
-                    setTimeout(() => {
-                        if (window.walletSaveSystem && window.walletSaveSystem.loadWalletData) {
-                            const savedData = window.walletSaveSystem.loadWalletData(currentAccount);
-                            if (savedData) {
-                                window.walletSaveSystem.applyGameState(savedData);
-                                showNotification('¡Progreso cargado!', 'success');
-                                setTimeout(() => {
-                                    if (window.resetFishingSystem) window.resetFishingSystem();
-                                    setTimeout(() => {
-                                        try {
-                                            if (typeof window.syncFishFromFirebase === 'function') window.syncFishFromFirebase();
-                                        } catch (e) {}
-                                    }, 200);
-                                }, 500);
-                            } else {
-                                showNotification('Nuevo juego para esta wallet', 'info');
-                                setTimeout(() => {
-                                    if (window.resetFishingSystem) window.resetFishingSystem();
-                                    setTimeout(() => {
-                                        try {
-                                            if (typeof window.syncFishFromFirebase === 'function') window.syncFishFromFirebase();
-                                        } catch (e) {}
-                                    }, 200);
-                                }, 500);
-                            }
-                        }
-                    }, 1000);
-                    window.removeEventListener('message', messageHandler);
-                    popup.close();
-                } else if (event.data.type === 'PRIVY_CONNECT_ERROR') {
-                    showNotification(event.data.error || 'Error de conexión', 'error');
-                    setButtonState(button, false);
-                }
-            };
-            window.addEventListener('message', messageHandler);
-            // Manejar cierre del popup
-            const checkClosed = setInterval(() => {
-                if (popup.closed) {
-                    clearInterval(checkClosed);
-                    window.removeEventListener('message', messageHandler);
-                    if (!isConnected) {
-                        setButtonState(button, false);
-                        showNotification('Conexión cancelada', 'info');
+
+            const privy = getPrivyClient();
+            // Esto abre el popup y maneja el flujo igual que React
+            await privy.loginWithCrossAppAccount();
+
+            // Espera a que el usuario esté autenticado
+            const user = await privy.getUser();
+            if (user && user.wallet && user.wallet.address) {
+                currentAccount = user.wallet.address;
+                userInfo = user;
+                isConnected = true;
+                setButtonState(button, true, currentAccount);
+                showNotification('¡Abstract Global Wallet conectada!', 'success');
+                if (window.setCurrentWalletAddress) window.setCurrentWalletAddress(currentAccount);
+                if (window.resetFishingSystem) window.resetFishingSystem();
+                window.dispatchEvent(new CustomEvent('walletConnected', {
+                    detail: {
+                        wallet: currentAccount,
+                        provider: 'agw-privy',
+                        user: userInfo
                     }
-                }
-            }, 1000);
+                }));
+                setTimeout(() => {
+                    if (window.walletSaveSystem && window.walletSaveSystem.loadWalletData) {
+                        const savedData = window.walletSaveSystem.loadWalletData(currentAccount);
+                        if (savedData) {
+                            window.walletSaveSystem.applyGameState(savedData);
+                            showNotification('¡Progreso cargado!', 'success');
+                            setTimeout(() => {
+                                if (window.resetFishingSystem) window.resetFishingSystem();
+                                setTimeout(() => {
+                                    try {
+                                        if (typeof window.syncFishFromFirebase === 'function') window.syncFishFromFirebase();
+                                    } catch (e) {}
+                                }, 200);
+                            }, 500);
+                        } else {
+                            showNotification('Nuevo juego para esta wallet', 'info');
+                            setTimeout(() => {
+                                if (window.resetFishingSystem) window.resetFishingSystem();
+                                setTimeout(() => {
+                                    try {
+                                        if (typeof window.syncFishFromFirebase === 'function') window.syncFishFromFirebase();
+                                    } catch (e) {}
+                                }, 200);
+                            }, 500);
+                        }
+                    }
+                }, 1000);
+            } else {
+                showNotification('No se pudo obtener la wallet', 'error');
+                setButtonState(button, false);
+            }
         } catch (error) {
-            showNotification('Error al conectar: ' + error.message, 'error');
+            showNotification('Error al conectar: ' + (error.message || error), 'error');
             setButtonState(button, false);
         }
     }
