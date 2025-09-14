@@ -1712,6 +1712,17 @@
         <button id="eventsButton" onclick="showEvents()" title="Events">🎯</button>
         <button id="skinButton" onclick="showSkinSelector()" title="Change Skin">👕</button>
         <div id="versionLabel">V 0.0.12</div>
+        <!-- React Wallet Widget Integration -->
+        <div id="react-wallet-root" style="position:fixed;top:16px;right:20px;z-index:10000"></div>
+        <link rel="stylesheet" href="js/react-wallet-widget/dist/widget.css">
+        <script src="js/react-wallet-widget/dist/widget.js"></script>
+        <script>
+          window.renderWalletWidget && window.renderWalletWidget("react-wallet-root");
+          window.addEventListener("walletConnected", (e) => {
+            window.setCurrentWalletAddress && window.setCurrentWalletAddress(e.detail.wallet);
+            // Puedes agregar aquí más integración con el juego si lo necesitas
+          });
+        </script>
         <script type="text/javascript" src="js/main.js"></script>
     </body>
 </html>

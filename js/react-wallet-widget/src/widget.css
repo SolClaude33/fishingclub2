@@ -1,0 +1,98 @@
+.wallet-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100px;
+}
+.wallet-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  transition: transform 0.3s ease;
+  z-index: 10001;
+}
+.wallet-card:hover {
+  transform: translateY(-5px);
+}
+.connect-section h2,
+.connected-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: 600;
+}
+.connect-section p,
+.connected-section p {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+.connect-button,
+.disconnect-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+.connect-button:hover,
+.disconnect-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+.connect-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+.disconnect-button {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+.disconnect-button:hover {
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+}
+.wallet-info {
+  margin: 30px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  text-align: left;
+}
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+.info-item:last-child {
+  border-bottom: none;
+}
+.label {
+  font-weight: 600;
+  color: #495057;
+}
+.value {
+  color: #667eea;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+}
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 1px solid #f5c6cb;
+}

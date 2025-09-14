@@ -1,1 +1,5 @@
-.vercel
+node_modules/
+js/react-wallet-widget/node_modules/
+.DS_Store
+*.log
+dist/
